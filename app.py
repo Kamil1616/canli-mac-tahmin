@@ -69,11 +69,14 @@ def api_fixtures():
         for m in live:
             if m["fixture_id"] not in fix_ids:
                 fixtures.append(m)
-        fixtures.sort(key=lambda x: (
-            0 if x["status"] in ["1H","2H","HT","ET","PEN"] else
-            1 if x["status"] == "NS" else 2,
-            x["time"]
-        ))
+        def sort_key(x):
+            s = x.get("status", "NS")
+            if s in ["1H", "2H", "ET", "PEN"]: order = 0
+            elif s == "HT": order = 1
+            elif s == "NS": order = 2
+            else: order = 3
+            return (order, x.get("time", ""))
+        fixtures.sort(key=sort_key)
         return jsonify({"fixtures": fixtures, "date": date, "count": len(fixtures)})
     except Exception as e:
         print(f"Fixtures error: {e}")
@@ -154,4 +157,3 @@ def debug():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
-    
