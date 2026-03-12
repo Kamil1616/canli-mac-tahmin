@@ -49,8 +49,8 @@ def calc_minute(m):
     if not half_start:
         return None
     try:
-        start_dt = datetime.strptime(half_start, "%Y-%m-%d %H:%M:%S")
-        start_utc = start_dt - timedelta(hours=7)  # GMT+7 → UTC
+        # Unix timestamp
+        start_utc = datetime.utcfromtimestamp(int(half_start))
         elapsed = int((datetime.utcnow() - start_utc).total_seconds() / 60)
         if status == 1:
             return max(1, min(45, elapsed))
@@ -64,14 +64,16 @@ def parse_match(m):
     status = parse_status(code)
     elapsed = calc_minute(m)
 
-    raw_time = m.get("matchTime", "")
+    # matchTime Unix timestamp → UTC+3
+    raw_time = m.get("matchTime", 0)
     try:
-        dt_gmt7 = datetime.strptime(raw_time, "%Y-%m-%d %H:%M:%S")
-        dt_local = dt_gmt7 - timedelta(hours=4)  # GMT+7 → UTC+3
+        ts = int(raw_time)
+        dt_utc = datetime.utcfromtimestamp(ts)
+        dt_local = dt_utc + timedelta(hours=3)  # UTC+3
         match_time = dt_local.strftime("%Y-%m-%dT%H:%M:%S+03:00")
         local_date = dt_local.strftime("%Y-%m-%d")
     except:
-        match_time = raw_time
+        match_time = str(raw_time)
         local_date = datetime.now().strftime("%Y-%m-%d")
 
     return {
@@ -172,7 +174,7 @@ def get_team_form(team_id, fixture_id=None):
             continue
         finished.append(m)
 
-    finished = sorted(finished, key=lambda x: x.get("matchTime", ""))[-8:]
+    finished = sorted(finished, key=lambda x: x.get("matchTime", 0))[-8:]
     if len(finished) < 3:
         return None
 
