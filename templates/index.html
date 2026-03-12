@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Canlı Maç Tahmin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--card:#111827;--card2:#1a2235;--border:#1e2d45;
+  --text:#e2e8f0;--muted:#64748b;--accent:#3b82f6;--green:#22c55e;
+  --red:#ef4444;--yellow:#f59e0b;--orange:#f97316;--live:#ef4444;
+  --signal:#10b981;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+/* ─── HEADER ─── */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.header-logo{font-size:20px}
+.header-title{font-weight:700;font-size:16px}
+.header-subtitle{font-size:11px;color:var(--muted)}
+.live-badge{background:var(--live);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+/* ─── TABS ─── */
+.date-tabs{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--border)}
+.date-tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* ─── CONTROLS ─── */
+.controls{padding:10px 16px;display:flex;gap:8px;align-items:center;background:var(--bg)}
+.search-box{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none}
+.filter-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .2s;white-space:nowrap}
+.filter-btn.active{background:var(--live);color:#fff;border-color:var(--live)}
+/* ─── STATS BAR ─── */
+.stats-bar{display:flex;gap:16px;padding:8px 16px;background:var(--card2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.stat-item span{color:var(--text);font-weight:600}
+/* ─── FIXTURES ─── */
+.fixtures{padding:8px 16px;display:flex;flex-direction:column;gap:6px}
+/* ─── CARD ─── */
+.match-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .2s}
+.match-card:hover{border-color:var(--accent)}
+.match-card.live-card{border-color:rgba(239,68,68,0.4)}
+.match-card.has-signal{border-color:rgba(16,185,129,0.5)}
+.card-header{padding:6px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--card2)}
+.league-info{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.signal-badges{display:flex;gap:4px;flex-wrap:wrap}
+.signal-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(16,185,129,0.15);color:var(--signal);border:1px solid rgba(16,185,129,0.3)}
+.card-body{padding:10px 12px;display:flex;align-items:center;gap:8px}
+.team-block{flex:1;display:flex;flex-direction:column;gap:3px}
+.team-name{font-size:13px;font-weight:600}
+.team-name.away{text-align:right}
+.match-center{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:70px;gap:1px}
+.match-time{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.match-time.live{color:var(--live);font-weight:700}
+.match-score{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)}
+.vs-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.ht-score{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);opacity:0.65}
+/* ─── DETAIL PANEL ─── */
+.detail-panel{display:none;padding:12px;border-top:1px solid var(--border);background:var(--bg)}
+.detail-panel.open{display:block}
+.detail-loading{text-align:center;padding:20px;color:var(--muted);font-size:13px}
+/* ─── TAHMIN BLOKLARI ─── */
+.pred-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.pred-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px}
+.pred-box-title{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.prob-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.prob-label{font-size:12px;font-weight:600;min-width:28px}
+.prob-bar-wrap{flex:1;background:var(--border);border-radius:4px;height:6px}
+.prob-bar{height:6px;border-radius:4px;background:var(--accent);transition:width .5s}
+.prob-bar.green{background:var(--green)}
+.prob-bar.red{background:var(--red)}
+.prob-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;min-width:38px;text-align:right}
+/* ─── OVER PROBS ─── */
+.over-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
+.over-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px;text-align:center}
+.over-label{font-size:9px;color:var(--muted);font-weight:600}
+.over-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)}
+/* ─── SİNYALLER ─── */
+.signals-section{margin-bottom:10px}
+.signals-title{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase}
+.signal-card{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:5px;border:1px solid}
+.signal-card.green{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.25)}
+.signal-card.blue{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.25)}
+.signal-card.orange{background:rgba(249,115,22,0.08);border-color:rgba(249,115,22,0.25)}
+.signal-card.yellow{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25)}
+.signal-card.gray{background:rgba(100,116,139,0.08);border-color:rgba(100,116,139,0.25)}
+.signal-icon{font-size:16px}
+.signal-text{flex:1}
+.signal-label{font-size:12px;font-weight:700}
+.signal-desc{font-size:11px;color:var(--muted)}
+.signal-strength{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,0.08)}
+/* ─── STATS ─── */
+.live-stats-grid{display:flex;flex-direction:column;gap:4px}
+.stat-row{display:flex;align-items:center;gap:6px}
+.stat-name{font-size:11px;color:var(--muted);flex:1;text-align:center}
+.stat-home-val{font-size:12px;font-weight:700;min-width:28px;text-align:right}
+.stat-away-val{font-size:12px;font-weight:700;min-width:28px}
+.stat-bar-wrap{flex:2;display:flex;gap:2px;height:5px}
+.stat-bar-h{height:5px;border-radius:2px 0 0 2px;background:var(--accent);transition:width .5s}
+.stat-bar-a{height:5px;border-radius:0 2px 2px 0;background:var(--orange);transition:width .5s}
+/* ─── HT ANALİZ ─── */
+.ht-analysis{background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:10px;margin-bottom:10px}
+.ht-title{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px}
+/* ─── NO DATA ─── */
+.no-data{text-align:center;padding:40px;color:var(--muted)}
+.no-data-icon{font-size:40px;margin-bottom:8px}
+/* ─── LOADER ─── */
+.loader{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ─── SECTION TITLE ─── */
+.section-title{font-size:11px;color:var(--muted);font-weight:700;padding:8px 16px 4px;text-transform:uppercase;letter-spacing:0.5px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">⚡</div>
+  <div>
+    <div class="header-title">Canlı Tahmin</div>
+    <div class="header-subtitle">Anlık Maç Analizi</div>
+  </div>
+  <div id="liveBadge" style="margin-left:auto;display:none" class="live-badge">● CANLI</div>
+</div>
+
+<div class="date-tabs" id="dateTabs"></div>
+
+<div class="controls">
+  <input class="search-box" id="searchBox" placeholder="🔍 Takım ara..." oninput="filterFixtures()">
+  <button class="filter-btn active" id="btnAll" onclick="setFilter('all')">Tümü</button>
+  <button class="filter-btn" id="btnLive" onclick="setFilter('live')">🔴 Canlı</button>
+  <button class="filter-btn" id="btnSignal" onclick="setFilter('signal')">⚡ Sinyal</button>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item">Toplam <span id="stTotal">0</span></div>
+  <div class="stat-item">🔴 Canlı <span id="stLive">0</span></div>
+  <div class="stat-item">⚡ Sinyal <span id="stSignal">0</span></div>
+</div>
+
+<div id="fixturesList"></div>
+
+<script>
+var allFixtures = [];
+var currentDate = '';
+var activeFilter = 'all';
+var analysisCache = {};
+var openCards = {};
+var preAnalyzeQueue = [];
+var preAnalyzeRunning = false;
+
+// ─── DATE TABS ────────────────────────────────────────────────────────────────
+function buildDateTabs(dates) {
+  var today = new Date().toISOString().split('T')[0];
+  var html = '';
+  dates.forEach(function(d) {
+    var label = d === today ? 'Bugün' : formatDateTab(d);
+    var active = d === currentDate ? ' active' : '';
+    html += '<button class="tab'+active+'" onclick="switchDate(\''+d+'\')">'+label+'</button>';
+  });
+  document.getElementById('dateTabs').innerHTML = html;
+}
+
+function formatDateTab(d) {
+  var dt = new Date(d + 'T12:00:00');
+  var days = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  return days[dt.getDay()] + ' ' + dt.getDate();
+}
+
+function switchDate(date) {
+  currentDate = date;
+  buildDateTabs(Object.keys(window._dates || {}).length ? Object.keys(window._dates) : [date]);
+  loadDate(date);
+}
+
+// ─── LOAD DATE ────────────────────────────────────────────────────────────────
+function loadDate(date) {
+  document.getElementById('fixturesList').innerHTML = '<div class="no-data"><div class="no-data-icon"><div class="loader"></div></div><div>Maçlar yükleniyor...</div></div>';
+  fetch('/api/fixtures?date=' + date)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      allFixtures = data.fixtures || [];
+      analysisCache = {};
+      openCards = {};
+      renderFixtures();
+      updateStats();
+      preAnalyzeAll(date);
+    })
+    .catch(function() {
+      document.getElementById('fixturesList').innerHTML = '<div class="no-data"><div class="no-data-icon">⚠️</div><div>Veri yüklenemedi</div></div>';
+    });
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderFixtures() {
+  var search = document.getElementById('searchBox').value.toLowerCase();
+  var list = allFixtures.filter(function(f) {
+    if(search && f.home_team_name.toLowerCase().indexOf(search) < 0 && f.away_team_name.toLowerCase().indexOf(search) < 0) return false;
+    if(activeFilter === 'live') return f.status === 'LIVE';
+    if(activeFilter === 'signal') {
+      var a = analysisCache[f.fixture_id];
+      return a && a.signals && a.signals.length > 0;
+    }
+    return true;
+  });
+
+  if(list.length === 0) {
+    document.getElementById('fixturesList').innerHTML = '<div class="no-data"><div class="no-data-icon">⚽</div><div>Maç bulunamadı</div></div>';
+    return;
+  }
+
+  // Sırala: LIVE önce, sonra saat
+  list.sort(function(a, b) {
+    if(a.status === 'LIVE' && b.status !== 'LIVE') return -1;
+    if(a.status !== 'LIVE' && b.status === 'LIVE') return 1;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+
+  var liveCount = list.filter(function(f) { return f.status === 'LIVE'; }).length;
+  document.getElementById('liveBadge').style.display = liveCount > 0 ? '' : 'none';
+
+  var sections = {};
+  list.forEach(function(f) {
+    var key = f.country || f.league_name || 'Diğer';
+    if(!sections[key]) sections[key] = [];
+    sections[key].push(f);
+  });
+
+  var html = '';
+  Object.keys(sections).forEach(function(country) {
+    var matches = sections[country];
+    // Sadece lig ismini göster
+    var ligName = matches[0].league_name || country;
+    html += '<div class="section-title">🌍 ' + esc(country) + ' · ' + esc(ligName) + '</div>';
+    html += '<div class="fixtures">';
+    matches.forEach(function(f) {
+      html += buildCard(f);
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('fixturesList').innerHTML = html;
+}
+
+function buildCard(f) {
+  var isLive = f.status === 'LIVE';
+  var isFT = f.status === 'FT';
+  var hasScore = f.home_goals !== null && f.home_goals !== undefined;
+  var analysis = analysisCache[f.fixture_id];
+  var signals = analysis ? (analysis.signals || []) : [];
+  var hasSignal = signals.length > 0;
+
+  // Zaman
+  var timeStr = '--:--';
+  var timeClass = 'match-time';
+  if(f.time) {
+    var d = new Date(f.time);
+    timeStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  if(isLive) {
+    timeClass = 'match-time live';
+    if(f.elapsed === 'HT') timeStr = '● HT';
+    else if(typeof f.elapsed === 'number') timeStr = '● ' + f.elapsed + "'";
+    else timeStr = '● CANLI';
+  } else if(isFT) {
+    timeStr = 'MS';
+  }
+
+  // Skor
+  var scoreHtml = hasScore
+    ? '<div class="match-score">' + f.home_goals + ' - ' + f.away_goals + '</div>'
+    : '<div class="vs-text">VS</div>';
+  var htHtml = (hasScore && f.home_ht_goals !== null && f.home_ht_goals !== undefined && f.away_ht_goals !== null && f.away_ht_goals !== undefined)
+    ? '<div class="ht-score">İY ' + f.home_ht_goals + '-' + f.away_ht_goals + '</div>'
+    : '';
+
+  // Signal badges
+  var badgesHtml = '<div class="signal-badges" id="badges_' + f.fixture_id + '">';
+  if(analysis) {
+    signals.forEach(function(s) {
+      badgesHtml += '<span class="signal-badge">' + s.icon + ' ' + s.label + '</span>';
+    });
+    if(analysis.pregame) {
+      var probs = analysis.pregame.probs;
+      badgesHtml += '<span class="signal-badge" style="background:rgba(59,130,246,0.12);color:#93c5fd;border-color:rgba(59,130,246,0.3)">1: %'+probs['1']+' X: %'+probs['X']+' 2: %'+probs['2']+'</span>';
+    }
+  }
+  badgesHtml += '</div>';
+
+  var cardClass = 'match-card' + (isLive ? ' live-card' : '') + (hasSignal ? ' has-signal' : '');
+
+  return '<div class="'+cardClass+'" id="card_'+f.fixture_id+'" onclick="toggleDetail('+f.fixture_id+')">' +
+    '<div class="card-header">' +
+      '<div class="league-info">'+esc(f.league_name||'')+' · '+esc(f.country||'')+'</div>' +
+      badgesHtml +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="team-block"><div class="team-name">'+esc(f.home_team_name||'?')+'</div></div>' +
+      '<div class="match-center">' +
+        '<div class="'+timeClass+'">'+timeStr+'</div>' +
+        scoreHtml + htHtml +
+      '</div>' +
+      '<div class="team-block"><div class="team-name away">'+esc(f.away_team_name||'?')+'</div></div>' +
+    '</div>' +
+    '<div class="detail-panel" id="detail_'+f.fixture_id+'"></div>' +
+  '</div>';
+}
+
+// ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
+function toggleDetail(fid) {
+  var panel = document.getElementById('detail_' + fid);
+  if(!panel) return;
+  if(openCards[fid]) {
+    panel.classList.remove('open');
+    openCards[fid] = false;
+    return;
+  }
+  openCards[fid] = true;
+  panel.classList.add('open');
+  if(analysisCache[fid]) {
+    panel.innerHTML = buildDetailHtml(analysisCache[fid]);
+    return;
+  }
+  panel.innerHTML = '<div class="detail-loading"><div class="loader"></div> Analiz yapılıyor...</div>';
+  fetchAnalysis(fid, currentDate, function(data) {
+    if(openCards[fid] && panel) {
+      panel.innerHTML = buildDetailHtml(data);
+    }
+  });
+}
+
+function buildDetailHtml(data) {
+  if(!data || !data.pregame) {
+    return '<div class="detail-loading" style="color:var(--red)">⚠️ Analiz yapılamadı (yetersiz veri)</div>';
+  }
+
+  var html = '';
+  var pregame = data.pregame || {};
+  var live = data.live || {};
+  var signals = data.signals || [];
+  var liveStats = data.live_stats;
+  var htAnalysis = data.halftime;
+
+  // ─── Sinyaller ───
+  if(signals.length > 0) {
+    html += '<div class="signals-section">';
+    html += '<div class="signals-title">⚡ Canlı Sinyaller</div>';
+    signals.forEach(function(s) {
+      html += '<div class="signal-card '+s.color+'">' +
+        '<div class="signal-icon">'+s.icon+'</div>' +
+        '<div class="signal-text"><div class="signal-label">'+s.label+'</div><div class="signal-desc">'+s.desc+'</div></div>' +
+        '<div class="signal-strength">'+s.strength+'</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ─── Devre arası analizi ───
+  if(htAnalysis) {
+    html += '<div class="ht-analysis">';
+    html += '<div class="ht-title">🔵 Devre Arası — 2. Yarı Tahmini</div>';
+    var probs2h = htAnalysis.probs_2h || {};
+    html += buildProbRows(probs2h);
+    html += '<div style="margin-top:8px;font-size:11px;color:var(--muted)">Over 2. Yarı:</div>';
+    html += buildOverGrid(htAnalysis.over_2h || {});
+    html += '</div>';
+  }
+
+  // ─── Tahmin grid ───
+  html += '<div class="pred-grid">';
+
+  // Maç öncesi
+  html += '<div class="pred-box">';
+  html += '<div class="pred-box-title">📊 Maç Öncesi</div>';
+  html += buildProbRows(pregame.probs || {});
+  html += '</div>';
+
+  // Canlı
+  if(live && live.probs) {
+    html += '<div class="pred-box">';
+    html += '<div class="pred-box-title">🔴 Canlı Tahmin</div>';
+    html += buildProbRows(live.probs || {});
+    html += '</div>';
+  } else {
+    html += '<div class="pred-box">';
+    html += '<div class="pred-box-title">λ Değerleri</div>';
+    html += '<div style="font-size:12px;color:var(--muted)">Ev: <b style="color:var(--text)">'+data.lambda_home+'</b></div>';
+    html += '<div style="font-size:12px;color:var(--muted)">Dep: <b style="color:var(--text)">'+data.lambda_away+'</b></div>';
+    html += '<div style="font-size:12px;color:var(--muted)">IY: <b style="color:var(--text)">'+data.lambda_iy+'</b></div>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+
+  // ─── Over probs ───
+  html += '<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase">Gol Sayısı (MS)</div>';
+  html += buildOverGrid(pregame.over || {});
+  html += '</div>';
+
+  // ─── Canlı istatistikler ───
+  if(liveStats) {
+    html += buildLiveStats(liveStats);
+  }
+
+  return html;
+}
+
+function buildProbRows(probs) {
+  var labels = {'1':'Ev','X':'Beraberlik','2':'Dep'};
+  var colors = {'1':'','X':'green','2':'red'};
+  var html = '';
+  ['1','X','2'].forEach(function(k) {
+    var val = probs[k] || 0;
+    html += '<div class="prob-row">' +
+      '<div class="prob-label">'+labels[k]+'</div>' +
+      '<div class="prob-bar-wrap"><div class="prob-bar '+colors[k]+'" style="width:'+Math.min(100,val)+'%"></div></div>' +
+      '<div class="prob-val">%'+val+'</div>' +
+    '</div>';
+  });
+  return html;
+}
+
+function buildOverGrid(over) {
+  var html = '<div class="over-grid">';
+  ['0.5','1.5','2.5','3.5'].forEach(function(k) {
+    var val = over[k] || 0;
+    html += '<div class="over-item"><div class="over-label">+'+k+'</div><div class="over-val">%'+val+'</div></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function buildLiveStats(liveStats) {
+  var h = liveStats.home || {};
+  var a = liveStats.away || {};
+  var statItems = [
+    {key:'total_shots', label:'Şut'},
+    {key:'shots_on_target', label:'İsabetli'},
+    {key:'corner_kicks', label:'Korner'},
+    {key:'ball_possession', label:'Top %', isPoss:true},
+    {key:'yellow_cards', label:'Sarı Kart'},
+  ];
+  var html = '<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase">📈 Canlı İstatistik</div>';
+  html += '<div class="live-stats-grid">';
+  statItems.forEach(function(item) {
+    var hv = h[item.key] || 0;
+    var av = a[item.key] || 0;
+    if(item.isPoss) {
+      t
