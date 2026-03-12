@@ -445,4 +445,166 @@ function buildLiveStats(liveStats) {
     var hv = h[item.key] || 0;
     var av = a[item.key] || 0;
     if(item.isPoss) {
-      t
+      try { hv = parseFloat(String(hv).replace('%','')); av = parseFloat(String(av).replace('%','')); } catch(e){}
+    }
+    var total = parseFloat(hv) + parseFloat(av);
+    var hp = total > 0 ? (parseFloat(hv) / total * 100) : 50;
+    var ap = 100 - hp;
+    html += '<div class="stat-row">' +
+      '<div class="stat-home-val">'+hv+'</div>' +
+      '<div class="stat-bar-wrap">' +
+        '<div class="stat-bar-h" style="width:'+hp+'%"></div>' +
+        '<div class="stat-bar-a" style="width:'+ap+'%"></div>' +
+      '</div>' +
+      '<div class="stat-away-val">'+av+'</div>' +
+      '<div class="stat-name">'+item.label+'</div>' +
+    '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+// ─── PRE-ANALYZE ──────────────────────────────────────────────────────────────
+function preAnalyzeAll(date) {
+  if(preAnalyzeRunning) return;
+  preAnalyzeRunning = true;
+  preAnalyzeQueue = allFixtures.filter(function(f) {
+    return f.status === 'LIVE' || f.status === 'NS';
+  }).map(function(f) { return f.fixture_id; });
+  processNextAnalyze(date);
+}
+
+function processNextAnalyze(date) {
+  if(preAnalyzeQueue.length === 0) {
+    preAnalyzeRunning = false;
+    updateStats();
+    return;
+  }
+  var fid = preAnalyzeQueue.shift();
+  if(analysisCache[fid]) {
+    setTimeout(function() { processNextAnalyze(date); }, 50);
+    return;
+  }
+  fetchAnalysis(fid, date, function() {
+    updateBadges(fid);
+    updateStats();
+    setTimeout(function() { processNextAnalyze(date); }, 300);
+  });
+}
+
+function fetchAnalysis(fid, date, cb) {
+  fetch('/api/analyze/' + fid + '?date=' + date)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if(data && !data.error) {
+        analysisCache[fid] = data;
+      }
+      if(cb) cb(data);
+    })
+    .catch(function() { if(cb) cb(null); });
+}
+
+function updateBadges(fid) {
+  var el = document.getElementById('badges_' + fid);
+  if(!el) return;
+  var data = analysisCache[fid];
+  if(!data) return;
+  var signals = data.signals || [];
+  var html = '';
+  signals.forEach(function(s) {
+    html += '<span class="signal-badge">' + s.icon + ' ' + s.label + '</span>';
+  });
+  if(data.pregame && data.pregame.probs) {
+    var probs = data.pregame.probs;
+    html += '<span class="signal-badge" style="background:rgba(59,130,246,0.12);color:#93c5fd;border-color:rgba(59,130,246,0.3)">1: %'+probs['1']+' X: %'+probs['X']+' 2: %'+probs['2']+'</span>';
+  }
+  el.innerHTML = html;
+  if(signals.length > 0) {
+    var card = document.getElementById('card_' + fid);
+    if(card) card.classList.add('has-signal');
+  }
+}
+
+// ─── STATS BAR ────────────────────────────────────────────────────────────────
+function updateStats() {
+  var total = allFixtures.length;
+  var live = allFixtures.filter(function(f) { return f.status === 'LIVE'; }).length;
+  var signal = Object.keys(analysisCache).filter(function(fid) {
+    var a = analysisCache[fid];
+    return a && a.signals && a.signals.length > 0;
+  }).length;
+  document.getElementById('stTotal').textContent = total;
+  document.getElementById('stLive').textContent = live;
+  document.getElementById('stSignal').textContent = signal;
+}
+
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+function setFilter(f) {
+  activeFilter = f;
+  ['btnAll','btnLive','btnSignal'].forEach(function(id) {
+    document.getElementById(id).classList.remove('active');
+  });
+  var map = {all:'btnAll', live:'btnLive', signal:'btnSignal'};
+  document.getElementById(map[f]).classList.add('active');
+  renderFixtures();
+}
+
+function filterFixtures() { renderFixtures(); }
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── CANLI YENİLEME ───────────────────────────────────────────────────────────
+setInterval(function() {
+  var today = getTodayLocal();
+  if(currentDate !== today) return;
+  var hasLive = allFixtures.some(function(f) { return f.status === 'LIVE'; });
+  if(!hasLive) return;
+  fetch('/api/fixtures?date=' + currentDate)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var updated = data.fixtures || [];
+      updated.forEach(function(f) {
+        var idx = -1;
+        for(var i=0; i<allFixtures.length; i++) {
+          if(allFixtures[i].fixture_id === f.fixture_id) { idx = i; break; }
+        }
+        if(idx >= 0) allFixtures[idx] = f;
+        // Canlı analizi yenile
+        if(f.status === 'LIVE') {
+          delete analysisCache[f.fixture_id];
+        }
+      });
+      renderFixtures();
+      updateStats();
+    }).catch(function(){});
+}, 60000);
+
+// ─── BUGÜNÜN TARİHİ UTC+3 ────────────────────────────────────────────────────
+function getTodayLocal() {
+  var now = new Date();
+  var local = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+  return local.toISOString().split('T')[0];
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+fetch('/api/dates')
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var dates = data.dates || [];
+    var today = getTodayLocal();
+    currentDate = dates.indexOf(today) >= 0 ? today : (dates[0] || today);
+    window._dates = {};
+    dates.forEach(function(d) { window._dates[d] = true; });
+    buildDateTabs(dates);
+    loadDate(currentDate);
+  })
+  .catch(function() {
+    currentDate = getTodayLocal();
+    loadDate(currentDate);
+  });
+</script>
+</body>
+</html>
