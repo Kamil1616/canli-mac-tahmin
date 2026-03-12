@@ -92,12 +92,14 @@ def api_analyze(fixture_id):
 
         # Fixture bul
         fixtures = get_fixtures_cached(date)
-        fix = next((f for f in fixtures if f["fixture_id"] == fixture_id), None)
+        print(f"Fixtures count: {len(fixtures)}, looking for: {fixture_id}")
+        print(f"Fixture IDs sample: {[f['fixture_id'] for f in fixtures[:5]]}")
+        fix = next((f for f in fixtures if str(f["fixture_id"]) == str(fixture_id)), None)
         if not fix:
             live = get_live_matches()
-            fix = next((f for f in live if f["fixture_id"] == fixture_id), None)
+            fix = next((f for f in live if str(f["fixture_id"]) == str(fixture_id)), None)
         if not fix:
-            return jsonify({"error": "Maç bulunamadı"}), 404
+            return jsonify({"error": "Maç bulunamadı", "fixtures_count": len(fixtures), "date": date}), 404
 
         home_id = fix.get("home_team_id")
         away_id = fix.get("away_team_id")
@@ -152,3 +154,4 @@ def debug():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+    
