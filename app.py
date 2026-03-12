@@ -53,7 +53,8 @@ def index():
 
 @app.route("/api/fixtures")
 def api_fixtures():
-    date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
+    today_utc3 = (datetime.utcnow() + timedelta(hours=3)).strftime("%Y-%m-%d")
+    date = request.args.get("date", today_utc3)
     try:
         fixtures = get_fixtures_cached(date)
         # Canlı maçları da birleştir
@@ -71,10 +72,11 @@ def api_fixtures():
                 fixtures.append(m)
         def sort_key(x):
             s = x.get("status", "NS")
-            if s in ["1H", "2H", "ET", "PEN"]: order = 0
-            elif s == "HT": order = 1
-            elif s == "NS": order = 2
-            else: order = 3
+            if s in ["1H", "ET", "PEN"]: order = 0    # canlı
+            elif s == "HT": order = 1                  # devre arası
+            elif s == "2H": order = 2                  # 2. yarı
+            elif s == "NS": order = 3                  # başlamadı
+            else: order = 4                            # bitti/iptal
             return (order, x.get("time", ""))
         fixtures.sort(key=sort_key)
         return jsonify({"fixtures": fixtures, "date": date, "count": len(fixtures)})
@@ -84,7 +86,8 @@ def api_fixtures():
 
 @app.route("/api/analyze/<int:fixture_id>")
 def api_analyze(fixture_id):
-    date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
+    today_utc3 = (datetime.utcnow() + timedelta(hours=3)).strftime("%Y-%m-%d")
+    date = request.args.get("date", today_utc3)
     force = request.args.get("force", "0") == "1"
     try:
         cache_key = f"analysis_{fixture_id}"
@@ -133,9 +136,10 @@ def api_analyze(fixture_id):
 
 @app.route("/api/dates")
 def api_dates():
-    today = datetime.now()
-    dates = [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(-1, 5)]
-    return jsonify({"dates": dates})
+    # UTC+3 ile bugünü hesapla
+    today = datetime.utcnow() + timedelta(hours=3)
+    dates = [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(-2, 5)]
+    return jsonify({"dates": dates, "today": today.strftime("%Y-%m-%d")})
 
 @app.route("/api/clear-cache")
 def clear_cache():
