@@ -14,39 +14,34 @@
   --signal:#10b981;
 }
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
-/* ─── HEADER ─── */
 .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
 .header-logo{font-size:20px}
 .header-title{font-weight:700;font-size:16px}
 .header-subtitle{font-size:11px;color:var(--muted)}
-.live-badge{background:var(--live);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;animation:pulse 1.5s infinite}
+.live-badge{background:var(--live);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;animation:pulse 1.5s infinite;margin-left:auto}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
-/* ─── TABS ─── */
 .date-tabs{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--border)}
 .date-tabs::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
 .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-/* ─── CONTROLS ─── */
 .controls{padding:10px 16px;display:flex;gap:8px;align-items:center;background:var(--bg)}
 .search-box{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none}
 .filter-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .2s;white-space:nowrap}
 .filter-btn.active{background:var(--live);color:#fff;border-color:var(--live)}
-/* ─── STATS BAR ─── */
 .stats-bar{display:flex;gap:16px;padding:8px 16px;background:var(--card2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
 .stat-item span{color:var(--text);font-weight:600}
-/* ─── FIXTURES ─── */
 .fixtures{padding:8px 16px;display:flex;flex-direction:column;gap:6px}
-/* ─── CARD ─── */
 .match-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .2s}
 .match-card:hover{border-color:var(--accent)}
 .match-card.live-card{border-color:rgba(239,68,68,0.4)}
 .match-card.has-signal{border-color:rgba(16,185,129,0.5)}
-.card-header{padding:6px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--card2)}
-.league-info{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.signal-badges{display:flex;gap:4px;flex-wrap:wrap}
-.signal-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(16,185,129,0.15);color:var(--signal);border:1px solid rgba(16,185,129,0.3)}
+.card-header{padding:6px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--card2);gap:8px}
+.league-info{font-size:10px;color:var(--muted);white-space:nowrap}
+.signal-badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.signal-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(16,185,129,0.15);color:var(--signal);border:1px solid rgba(16,185,129,0.3);white-space:nowrap}
+.signal-badge.value{background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.4)}
 .card-body{padding:10px 12px;display:flex;align-items:center;gap:8px}
-.team-block{flex:1;display:flex;flex-direction:column;gap:3px}
+.team-block{flex:1}
 .team-name{font-size:13px;font-weight:600}
 .team-name.away{text-align:right}
 .match-center{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:70px;gap:1px}
@@ -55,60 +50,51 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 .match-score{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)}
 .vs-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
 .ht-score{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);opacity:0.65}
-/* ─── DETAIL PANEL ─── */
 .detail-panel{display:none;padding:12px;border-top:1px solid var(--border);background:var(--bg)}
 .detail-panel.open{display:block}
 .detail-loading{text-align:center;padding:20px;color:var(--muted);font-size:13px}
-/* ─── TAHMIN BLOKLARI ─── */
 .pred-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .pred-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px}
 .pred-box-title{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
 .prob-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
-.prob-label{font-size:12px;font-weight:600;min-width:28px}
+.prob-label{font-size:12px;font-weight:600;min-width:60px}
 .prob-bar-wrap{flex:1;background:var(--border);border-radius:4px;height:6px}
 .prob-bar{height:6px;border-radius:4px;background:var(--accent);transition:width .5s}
 .prob-bar.green{background:var(--green)}
 .prob-bar.red{background:var(--red)}
 .prob-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;min-width:38px;text-align:right}
-/* ─── OVER PROBS ─── */
 .over-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
 .over-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px;text-align:center}
 .over-label{font-size:9px;color:var(--muted);font-weight:600}
 .over-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)}
-/* ─── SİNYALLER ─── */
+.iy-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.iy-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.iy-label{font-size:9px;color:var(--muted);font-weight:600;margin-bottom:2px}
+.iy-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--green)}
+.odds-row{display:flex;gap:6px;margin-bottom:10px}
+.odds-box{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.odds-label{font-size:9px;color:var(--muted);font-weight:600;margin-bottom:3px}
+.odds-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--yellow)}
+.odds-val.value{color:#fbbf24;background:rgba(245,158,11,0.1);border-radius:4px;padding:1px 4px}
 .signals-section{margin-bottom:10px}
 .signals-title{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase}
-.signal-card{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:5px;border:1px solid}
-.signal-card.green{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.25)}
-.signal-card.blue{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.25)}
-.signal-card.orange{background:rgba(249,115,22,0.08);border-color:rgba(249,115,22,0.25)}
-.signal-card.yellow{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25)}
-.signal-card.gray{background:rgba(100,116,139,0.08);border-color:rgba(100,116,139,0.25)}
-.signal-icon{font-size:16px}
-.signal-text{flex:1}
-.signal-label{font-size:12px;font-weight:700}
-.signal-desc{font-size:11px;color:var(--muted)}
-.signal-strength{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,0.08)}
-/* ─── STATS ─── */
+.signal-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:var(--card2);border:1px solid var(--border)}
+.signal-item-label{font-size:12px;font-weight:700}
+.signal-item-prob{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--signal)}
 .live-stats-grid{display:flex;flex-direction:column;gap:4px}
 .stat-row{display:flex;align-items:center;gap:6px}
 .stat-name{font-size:11px;color:var(--muted);flex:1;text-align:center}
-.stat-home-val{font-size:12px;font-weight:700;min-width:28px;text-align:right}
-.stat-away-val{font-size:12px;font-weight:700;min-width:28px}
+.stat-home-val{font-size:12px;font-weight:700;min-width:24px;text-align:right}
+.stat-away-val{font-size:12px;font-weight:700;min-width:24px}
 .stat-bar-wrap{flex:2;display:flex;gap:2px;height:5px}
 .stat-bar-h{height:5px;border-radius:2px 0 0 2px;background:var(--accent);transition:width .5s}
 .stat-bar-a{height:5px;border-radius:0 2px 2px 0;background:var(--orange);transition:width .5s}
-/* ─── HT ANALİZ ─── */
-.ht-analysis{background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:10px;margin-bottom:10px}
-.ht-title{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px}
-/* ─── NO DATA ─── */
+.section-label{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
 .no-data{text-align:center;padding:40px;color:var(--muted)}
 .no-data-icon{font-size:40px;margin-bottom:8px}
-/* ─── LOADER ─── */
 .loader{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* ─── SECTION TITLE ─── */
-.section-title{font-size:11px;color:var(--muted);font-weight:700;padding:8px 16px 4px;text-transform:uppercase;letter-spacing:0.5px}
+.divider{height:1px;background:var(--border);margin:10px 0}
 </style>
 </head>
 <body>
@@ -119,13 +105,13 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
     <div class="header-title">Canlı Tahmin</div>
     <div class="header-subtitle">Anlık Maç Analizi</div>
   </div>
-  <div id="liveBadge" style="margin-left:auto;display:none" class="live-badge">● CANLI</div>
+  <div id="liveBadge" style="display:none" class="live-badge">● CANLI</div>
 </div>
 
 <div class="date-tabs" id="dateTabs"></div>
 
 <div class="controls">
-  <input class="search-box" id="searchBox" placeholder="🔍 Takım ara..." oninput="filterFixtures()">
+  <input class="search-box" id="searchBox" placeholder="🔍 Takım ara..." oninput="renderFixtures()">
   <button class="filter-btn active" id="btnAll" onclick="setFilter('all')">Tümü</button>
   <button class="filter-btn" id="btnLive" onclick="setFilter('live')">🔴 Canlı</button>
   <button class="filter-btn" id="btnSignal" onclick="setFilter('signal')">⚡ Sinyal</button>
@@ -145,17 +131,17 @@ var currentDate = '';
 var activeFilter = 'all';
 var analysisCache = {};
 var openCards = {};
-var preAnalyzeQueue = [];
-var preAnalyzeRunning = false;
+var analyzeQueue = [];
+var analyzeRunning = false;
 
-// ─── DATE TABS ────────────────────────────────────────────────────────────────
+// ─── DATE TABS ───────────────────────────────────────────────────────────────
 function buildDateTabs(dates) {
-  var today = new Date().toISOString().split('T')[0];
+  var today = getTodayLocal();
   var html = '';
   dates.forEach(function(d) {
     var label = d === today ? 'Bugün' : formatDateTab(d);
-    var active = d === currentDate ? ' active' : '';
-    html += '<button class="tab'+active+'" onclick="switchDate(\''+d+'\')">'+label+'</button>';
+    var cls = d === currentDate ? ' active' : '';
+    html += '<button class="tab'+cls+'" onclick="switchDate(\''+d+'\')">'+label+'</button>';
   });
   document.getElementById('dateTabs').innerHTML = html;
 }
@@ -168,11 +154,11 @@ function formatDateTab(d) {
 
 function switchDate(date) {
   currentDate = date;
-  buildDateTabs(Object.keys(window._dates || {}).length ? Object.keys(window._dates) : [date]);
+  buildDateTabs(window._allDates || [date]);
   loadDate(date);
 }
 
-// ─── LOAD DATE ────────────────────────────────────────────────────────────────
+// ─── LOAD DATE ───────────────────────────────────────────────────────────────
 function loadDate(date) {
   document.getElementById('fixturesList').innerHTML = '<div class="no-data"><div class="no-data-icon"><div class="loader"></div></div><div>Maçlar yükleniyor...</div></div>';
   fetch('/api/fixtures?date=' + date)
@@ -183,19 +169,20 @@ function loadDate(date) {
       openCards = {};
       renderFixtures();
       updateStats();
-      preAnalyzeAll(date);
+      startPreAnalyze(date);
     })
     .catch(function() {
       document.getElementById('fixturesList').innerHTML = '<div class="no-data"><div class="no-data-icon">⚠️</div><div>Veri yüklenemedi</div></div>';
     });
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
+// ─── RENDER ──────────────────────────────────────────────────────────────────
 function renderFixtures() {
   var search = document.getElementById('searchBox').value.toLowerCase();
   var list = allFixtures.filter(function(f) {
     if(search && f.home_team_name.toLowerCase().indexOf(search) < 0 && f.away_team_name.toLowerCase().indexOf(search) < 0) return false;
-    if(activeFilter === 'live') return f.status === 'LIVE';
+    var s = f.status;
+    if(activeFilter === 'live') return s === '1H' || s === '2H' || s === 'HT' || s === 'ET';
     if(activeFilter === 'signal') {
       var a = analysisCache[f.fixture_id];
       return a && a.signals && a.signals.length > 0;
@@ -208,27 +195,18 @@ function renderFixtures() {
     return;
   }
 
-  // Sırala: LIVE önce, sonra saat
-  list.sort(function(a, b) {
-    if(a.status === 'LIVE' && b.status !== 'LIVE') return -1;
-    if(a.status !== 'LIVE' && b.status === 'LIVE') return 1;
-    return (a.time || '').localeCompare(b.time || '');
-  });
-
-  var liveCount = list.filter(function(f) { return f.status === 'LIVE'; }).length;
-  document.getElementById('liveBadge').style.display = liveCount > 0 ? '' : 'none';
-
   var html = '<div class="fixtures">';
-  list.forEach(function(f) {
-    html += buildCard(f);
-  });
+  list.forEach(function(f) { html += buildCard(f); });
   html += '</div>';
-
   document.getElementById('fixturesList').innerHTML = html;
+
+  var liveCount = list.filter(function(f) { return ['1H','2H','HT','ET','PEN'].indexOf(f.status) >= 0; }).length;
+  document.getElementById('liveBadge').style.display = liveCount > 0 ? '' : 'none';
 }
 
+// ─── KART ────────────────────────────────────────────────────────────────────
 function buildCard(f) {
-  var isLive = f.status === 'LIVE';
+  var isLive = ['1H','2H','HT','ET','PEN'].indexOf(f.status) >= 0;
   var isFT = f.status === 'FT';
   var hasScore = f.home_goals !== null && f.home_goals !== undefined;
   var analysis = analysisCache[f.fixture_id];
@@ -240,7 +218,7 @@ function buildCard(f) {
   var timeClass = 'match-time';
   if(f.time) {
     var d = new Date(f.time);
-    timeStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
   if(isLive) {
     timeClass = 'match-time live';
@@ -255,27 +233,19 @@ function buildCard(f) {
   var scoreHtml = hasScore
     ? '<div class="match-score">' + f.home_goals + ' - ' + f.away_goals + '</div>'
     : '<div class="vs-text">VS</div>';
-  var htHtml = (hasScore && f.home_ht_goals !== null && f.home_ht_goals !== undefined && f.away_ht_goals !== null && f.away_ht_goals !== undefined)
+  var htHtml = (hasScore && f.home_ht_goals !== null && f.home_ht_goals !== undefined)
     ? '<div class="ht-score">İY ' + f.home_ht_goals + '-' + f.away_ht_goals + '</div>'
     : '';
 
-  // Signal badges
-  var badgesHtml = '<div class="signal-badges" id="badges_' + f.fixture_id + '">';
-  if(analysis) {
-    signals.forEach(function(s) {
-      var pct = s.prob ? Math.round(s.prob * 100) + '%' : '';
-      var isValue = s.value ? ' style="background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.4)"' : '';
-      badgesHtml += '<span class="signal-badge"' + isValue + '>' + s.label + ' ' + pct + '</span>';
-    });
-  }
-  badgesHtml += '</div>';
+  // Badges
+  var badgesHtml = buildBadges(signals, analysis);
 
   var cardClass = 'match-card' + (isLive ? ' live-card' : '') + (hasSignal ? ' has-signal' : '');
 
-  return '<div class="'+cardClass+'" id="card_'+f.fixture_id+'" onclick="toggleDetail('+f.fixture_id+')">' +
+  return '<div class="'+cardClass+'" id="card_'+f.fixture_id+'" onclick="toggleDetail(\''+f.fixture_id+'\')">' +
     '<div class="card-header">' +
-      '<div class="league-info">'+esc(f.league_name||'')+' · '+esc(f.country||'')+'</div>' +
-      badgesHtml +
+      '<div class="league-info">'+esc(f.league_name||f.league_slug||'')+'</div>' +
+      '<div id="badges_'+f.fixture_id+'" class="signal-badges">'+badgesHtml+'</div>' +
     '</div>' +
     '<div class="card-body">' +
       '<div class="team-block"><div class="team-name">'+esc(f.home_team_name||'?')+'</div></div>' +
@@ -289,7 +259,17 @@ function buildCard(f) {
   '</div>';
 }
 
-// ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
+function buildBadges(signals, analysis) {
+  var html = '';
+  signals.forEach(function(s) {
+    var pct = typeof s.prob === 'number' ? Math.round(s.prob * 100) + '%' : '';
+    var cls = s.value ? ' class="signal-badge value"' : ' class="signal-badge"';
+    html += '<span'+cls+'>' + esc(s.label) + ' ' + pct + '</span>';
+  });
+  return html;
+}
+
+// ─── DETAIL PANEL ────────────────────────────────────────────────────────────
 function toggleDetail(fid) {
   var panel = document.getElementById('detail_' + fid);
   if(!panel) return;
@@ -306,82 +286,95 @@ function toggleDetail(fid) {
   }
   panel.innerHTML = '<div class="detail-loading"><div class="loader"></div> Analiz yapılıyor...</div>';
   fetchAnalysis(fid, currentDate, function(data) {
-    if(openCards[fid] && panel) {
-      panel.innerHTML = buildDetailHtml(data);
-    }
+    if(openCards[fid] && panel) panel.innerHTML = buildDetailHtml(data);
   });
 }
 
 function buildDetailHtml(data) {
-  if(!data || !data.pregame) {
+  if(!data || (!data.pregame && !data.prediction)) {
     return '<div class="detail-loading" style="color:var(--red)">⚠️ Analiz yapılamadı (yetersiz veri)</div>';
   }
 
   var html = '';
   var pregame = data.pregame || {};
-  var live = data.live || {};
+  var liveData = data.live || {};
   var signals = data.signals || [];
   var liveStats = data.live_stats;
-  var htAnalysis = data.halftime;
+  var odds = data.odds;
+  var fixture = data.fixture || {};
+  var isLive = ['1H','2H','HT','ET','PEN'].indexOf(fixture.status) >= 0;
 
-  // ─── Sinyaller ───
+  // ─── SİNYALLER ───
   if(signals.length > 0) {
     html += '<div class="signals-section">';
-    html += '<div class="signals-title">⚡ Canlı Sinyaller</div>';
+    html += '<div class="signals-title">⚡ Sinyaller</div>';
     signals.forEach(function(s) {
-      html += '<div class="signal-card '+s.color+'">' +
-        '<div class="signal-icon">'+s.icon+'</div>' +
-        '<div class="signal-text"><div class="signal-label">'+s.label+'</div><div class="signal-desc">'+s.desc+'</div></div>' +
-        '<div class="signal-strength">'+s.strength+'</div>' +
+      var pct = typeof s.prob === 'number' ? Math.round(s.prob * 100) + '%' : '';
+      var extra = s.value ? ' — ODD: ' + s.odd + ' (EV: +' + s.ev + ')' : '';
+      html += '<div class="signal-item">' +
+        '<div class="signal-item-label">' + esc(s.label) + extra + '</div>' +
+        '<div class="signal-item-prob">' + pct + '</div>' +
       '</div>';
     });
     html += '</div>';
   }
 
-  // ─── Devre arası analizi ───
-  if(htAnalysis) {
-    html += '<div class="ht-analysis">';
-    html += '<div class="ht-title">🔵 Devre Arası — 2. Yarı Tahmini</div>';
-    var probs2h = htAnalysis.probs_2h || {};
-    html += buildProbRows(probs2h);
-    html += '<div style="margin-top:8px;font-size:11px;color:var(--muted)">Over 2. Yarı:</div>';
-    html += buildOverGrid(htAnalysis.over_2h || {});
+  // ─── ORANLAR ───
+  if(odds && (odds.home || odds.draw || odds.away)) {
+    html += '<div class="section-label">📋 Bookmaker Oranları (' + esc(odds.bookmaker||'') + ')</div>';
+    html += '<div class="odds-row">';
+    var oddsLabels = [['home','1 (Ev)'],['draw','X (Ber)'],['away','2 (Dep)']];
+    oddsLabels.forEach(function(pair) {
+      var val = odds[pair[0]];
+      html += '<div class="odds-box"><div class="odds-label">'+pair[1]+'</div><div class="odds-val">'+(val||'-')+'</div></div>';
+    });
     html += '</div>';
+    if(odds.over_2_5 || odds.under_2_5) {
+      html += '<div class="odds-row">';
+      html += '<div class="odds-box"><div class="odds-label">2.5 Üst</div><div class="odds-val">'+(odds.over_2_5||'-')+'</div></div>';
+      html += '<div class="odds-box"><div class="odds-label">2.5 Alt</div><div class="odds-val">'+(odds.under_2_5||'-')+'</div></div>';
+      html += '</div>';
+    }
+    html += '<div class="divider"></div>';
   }
 
-  // ─── Tahmin grid ───
-  html += '<div class="pred-grid">';
+  // ─── CANLI TAHMİN ───
+  if(isLive && liveData && liveData.probs) {
+    html += '<div class="section-label">🔴 Canlı Tahmin (Kalan Süre)</div>';
+    html += '<div class="pred-box" style="margin-bottom:10px">';
+    html += buildProbRows(liveData.probs);
+    html += '</div>';
+    if(liveData.over) {
+      html += '<div class="section-label">Kalan Sürede Gol</div>';
+      html += buildOverGrid(liveData.over);
+    }
+    html += '<div class="divider"></div>';
+  }
 
-  // Maç öncesi
-  html += '<div class="pred-box">';
-  html += '<div class="pred-box-title">📊 Maç Öncesi</div>';
+  // ─── MAÇ ÖNCESİ TAHMİN ───
+  html += '<div class="section-label">📊 ' + (isLive ? 'Maç Öncesi Tahmin' : 'MS Tahmini') + '</div>';
+  html += '<div class="pred-box" style="margin-bottom:10px">';
   html += buildProbRows(pregame.probs || {});
   html += '</div>';
 
-  // Canlı
-  if(live && live.probs) {
-    html += '<div class="pred-box">';
-    html += '<div class="pred-box-title">🔴 Canlı Tahmin</div>';
-    html += buildProbRows(live.probs || {});
-    html += '</div>';
-  } else {
-    html += '<div class="pred-box">';
-    html += '<div class="pred-box-title">λ Değerleri</div>';
-    html += '<div style="font-size:12px;color:var(--muted)">Ev: <b style="color:var(--text)">'+data.lambda_home+'</b></div>';
-    html += '<div style="font-size:12px;color:var(--muted)">Dep: <b style="color:var(--text)">'+data.lambda_away+'</b></div>';
-    html += '<div style="font-size:12px;color:var(--muted)">IY: <b style="color:var(--text)">'+data.lambda_iy+'</b></div>';
+  // ─── MS GOL ───
+  html += '<div class="section-label">Gol Sayısı (MS)</div>';
+  html += buildOverGrid(pregame.over || {});
+
+  // ─── İY TAHMİN ───
+  if(pregame.iy_over) {
+    html += '<div class="section-label">İlk Yarı Gol</div>';
+    html += '<div class="iy-grid">';
+    html += '<div class="iy-item"><div class="iy-label">İY 0.5 Üst</div><div class="iy-val">%'+(pregame.iy_over['0.5']||0)+'</div></div>';
+    html += '<div class="iy-item"><div class="iy-label">İY 0.5 Alt</div><div class="iy-val" style="color:var(--red)">%'+(100-(pregame.iy_over['0.5']||0)).toFixed(1)+'</div></div>';
+    html += '<div class="iy-item"><div class="iy-label">İY 1.5 Üst</div><div class="iy-val">%'+(pregame.iy_over['1.5']||0)+'</div></div>';
+    html += '<div class="iy-item"><div class="iy-label">İY 1.5 Alt</div><div class="iy-val" style="color:var(--red)">%'+(100-(pregame.iy_over['1.5']||0)).toFixed(1)+'</div></div>';
     html += '</div>';
   }
 
-  html += '</div>';
-
-  // ─── Over probs ───
-  html += '<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase">Gol Sayısı (MS)</div>';
-  html += buildOverGrid(pregame.over || {});
-  html += '</div>';
-
-  // ─── Canlı istatistikler ───
+  // ─── CANLI İSTATİSTİK ───
   if(liveStats) {
+    html += '<div class="divider"></div>';
     html += buildLiveStats(liveStats);
   }
 
@@ -389,14 +382,13 @@ function buildDetailHtml(data) {
 }
 
 function buildProbRows(probs) {
-  var labels = {'1':'Ev','X':'Beraberlik','2':'Dep'};
-  var colors = {'1':'','X':'green','2':'red'};
+  var rows = [['1','Ev Sahibi',''],['X','Beraberlik','green'],['2','Deplasman','red']];
   var html = '';
-  ['1','X','2'].forEach(function(k) {
-    var val = probs[k] || 0;
+  rows.forEach(function(r) {
+    var val = probs[r[0]] || 0;
     html += '<div class="prob-row">' +
-      '<div class="prob-label">'+labels[k]+'</div>' +
-      '<div class="prob-bar-wrap"><div class="prob-bar '+colors[k]+'" style="width:'+Math.min(100,val)+'%"></div></div>' +
+      '<div class="prob-label">'+r[1]+'</div>' +
+      '<div class="prob-bar-wrap"><div class="prob-bar '+r[2]+'" style="width:'+Math.min(100,val)+'%"></div></div>' +
       '<div class="prob-val">%'+val+'</div>' +
     '</div>';
   });
@@ -413,66 +405,64 @@ function buildOverGrid(over) {
   return html;
 }
 
-function buildLiveStats(liveStats) {
-  var h = liveStats.home || {};
-  var a = liveStats.away || {};
-  var statItems = [
-    {key:'total_shots', label:'Şut'},
-    {key:'shots_on_target', label:'İsabetli'},
-    {key:'corner_kicks', label:'Korner'},
-    {key:'ball_possession', label:'Top %', isPoss:true},
-    {key:'yellow_cards', label:'Sarı Kart'},
+function buildLiveStats(ls) {
+  var h = ls.home || {};
+  var a = ls.away || {};
+  var items = [
+    ['total_shots','Şut'],['shots_on_target','İsabetli'],
+    ['corner_kicks','Korner'],['ball_possession','Top %'],
+    ['yellow_cards','Sarı'],['fouls','Faul'],
   ];
-  var html = '<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase">📈 Canlı İstatistik</div>';
-  html += '<div class="live-stats-grid">';
-  statItems.forEach(function(item) {
-    var hv = h[item.key] || 0;
-    var av = a[item.key] || 0;
-    if(item.isPoss) {
-      try { hv = parseFloat(String(hv).replace('%','')); av = parseFloat(String(av).replace('%','')); } catch(e){}
-    }
-    var total = parseFloat(hv) + parseFloat(av);
-    var hp = total > 0 ? (parseFloat(hv) / total * 100) : 50;
-    var ap = 100 - hp;
+  var html = '<div class="section-label">📈 Canlı İstatistik</div><div class="live-stats-grid">';
+  items.forEach(function(item) {
+    var hv = parseFloat(String(h[item[0]]||0).replace('%','')) || 0;
+    var av = parseFloat(String(a[item[0]]||0).replace('%','')) || 0;
+    var total = hv + av;
+    var hp = total > 0 ? hv/total*100 : 50;
     html += '<div class="stat-row">' +
       '<div class="stat-home-val">'+hv+'</div>' +
       '<div class="stat-bar-wrap">' +
         '<div class="stat-bar-h" style="width:'+hp+'%"></div>' +
-        '<div class="stat-bar-a" style="width:'+ap+'%"></div>' +
+        '<div class="stat-bar-a" style="width:'+(100-hp)+'%"></div>' +
       '</div>' +
       '<div class="stat-away-val">'+av+'</div>' +
-      '<div class="stat-name">'+item.label+'</div>' +
+      '<div class="stat-name">'+item[1]+'</div>' +
     '</div>';
   });
-  html += '</div></div>';
+  html += '</div>';
   return html;
 }
 
-// ─── PRE-ANALYZE ──────────────────────────────────────────────────────────────
-function preAnalyzeAll(date) {
-  if(preAnalyzeRunning) return;
-  preAnalyzeRunning = true;
-  preAnalyzeQueue = allFixtures.filter(function(f) {
-    return f.status === 'LIVE' || f.status === 'NS';
-  }).map(function(f) { return f.fixture_id; });
-  processNextAnalyze(date);
+// ─── PRE-ANALYZE ─────────────────────────────────────────────────────────────
+function startPreAnalyze(date) {
+  if(analyzeRunning) return;
+  analyzeRunning = true;
+  analyzeQueue = allFixtures.map(function(f) { return f.fixture_id; });
+  runNextAnalyze(date);
 }
 
-function processNextAnalyze(date) {
-  if(preAnalyzeQueue.length === 0) {
-    preAnalyzeRunning = false;
+function runNextAnalyze(date) {
+  if(analyzeQueue.length === 0) { analyzeRunning = false; updateStats(); return; }
+  var fid = analyzeQueue.shift();
+  if(analysisCache[fid]) { setTimeout(function(){ runNextAnalyze(date); }, 50); return; }
+  fetchAnalysis(fid, date, function(data) {
+    if(data && !data.error) {
+      // Badge güncelle
+      var el = document.getElementById('badges_' + fid);
+      if(el) el.innerHTML = buildBadges(data.signals || [], data);
+      // Has-signal class
+      if(data.signals && data.signals.length > 0) {
+        var card = document.getElementById('card_' + fid);
+        if(card) card.classList.add('has-signal');
+      }
+      // Açık panel varsa güncelle
+      if(openCards[fid]) {
+        var panel = document.getElementById('detail_' + fid);
+        if(panel) panel.innerHTML = buildDetailHtml(data);
+      }
+    }
     updateStats();
-    return;
-  }
-  var fid = preAnalyzeQueue.shift();
-  if(analysisCache[fid]) {
-    setTimeout(function() { processNextAnalyze(date); }, 50);
-    return;
-  }
-  fetchAnalysis(fid, date, function() {
-    updateBadges(fid);
-    updateStats();
-    setTimeout(function() { processNextAnalyze(date); }, 300);
+    setTimeout(function(){ runNextAnalyze(date); }, 400);
   });
 }
 
@@ -480,115 +470,66 @@ function fetchAnalysis(fid, date, cb) {
   fetch('/api/analyze/' + fid + '?date=' + date)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if(data && !data.error) {
-        analysisCache[fid] = data;
-      }
+      if(data && !data.error) analysisCache[fid] = data;
       if(cb) cb(data);
     })
     .catch(function() { if(cb) cb(null); });
 }
 
-function updateBadges(fid) {
-  var el = document.getElementById('badges_' + fid);
-  if(!el) return;
-  var data = analysisCache[fid];
-  if(!data) return;
-  var signals = data.signals || [];
-  var html = '';
-  signals.forEach(function(s) {
-    html += '<span class="signal-badge">' + s.icon + ' ' + s.label + '</span>';
-  });
-  if(data.pregame && data.pregame.probs) {
-    var probs = data.pregame.probs;
-    html += '<span class="signal-badge" style="background:rgba(59,130,246,0.12);color:#93c5fd;border-color:rgba(59,130,246,0.3)">1: %'+probs['1']+' X: %'+probs['X']+' 2: %'+probs['2']+'</span>';
-  }
-  el.innerHTML = html;
-  if(signals.length > 0) {
-    var card = document.getElementById('card_' + fid);
-    if(card) card.classList.add('has-signal');
-  }
-}
-
-// ─── STATS BAR ────────────────────────────────────────────────────────────────
+// ─── STATS ───────────────────────────────────────────────────────────────────
 function updateStats() {
-  var total = allFixtures.length;
-  var live = allFixtures.filter(function(f) { return f.status === 'LIVE'; }).length;
-  var signal = Object.keys(analysisCache).filter(function(fid) {
+  document.getElementById('stTotal').textContent = allFixtures.length;
+  document.getElementById('stLive').textContent = allFixtures.filter(function(f) {
+    return ['1H','2H','HT','ET','PEN'].indexOf(f.status) >= 0;
+  }).length;
+  document.getElementById('stSignal').textContent = Object.keys(analysisCache).filter(function(fid) {
     var a = analysisCache[fid];
     return a && a.signals && a.signals.length > 0;
   }).length;
-  document.getElementById('stTotal').textContent = total;
-  document.getElementById('stLive').textContent = live;
-  document.getElementById('stSignal').textContent = signal;
 }
 
-// ─── FILTER ───────────────────────────────────────────────────────────────────
+// ─── FILTER ──────────────────────────────────────────────────────────────────
 function setFilter(f) {
   activeFilter = f;
   ['btnAll','btnLive','btnSignal'].forEach(function(id) {
     document.getElementById(id).classList.remove('active');
   });
-  var map = {all:'btnAll', live:'btnLive', signal:'btnSignal'};
-  document.getElementById(map[f]).classList.add('active');
+  document.getElementById({all:'btnAll',live:'btnLive',signal:'btnSignal'}[f]).classList.add('active');
   renderFixtures();
 }
 
-function filterFixtures() { renderFixtures(); }
-
-// ─── UTILS ────────────────────────────────────────────────────────────────────
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ─── CANLI YENİLEME ───────────────────────────────────────────────────────────
+// ─── CANLI YENİLEME ──────────────────────────────────────────────────────────
 setInterval(function() {
-  var today = getTodayLocal();
-  if(currentDate !== today) return;
-  var hasLive = allFixtures.some(function(f) { return f.status === 'LIVE'; });
-  if(!hasLive) return;
+  if(!allFixtures.some(function(f){ return ['1H','2H','HT','ET'].indexOf(f.status)>=0; })) return;
   fetch('/api/fixtures?date=' + currentDate)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var updated = data.fixtures || [];
-      updated.forEach(function(f) {
-        var idx = -1;
-        for(var i=0; i<allFixtures.length; i++) {
-          if(allFixtures[i].fixture_id === f.fixture_id) { idx = i; break; }
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      (data.fixtures||[]).forEach(function(f){
+        for(var i=0;i<allFixtures.length;i++){
+          if(allFixtures[i].fixture_id===f.fixture_id){ allFixtures[i]=f; break; }
         }
-        if(idx >= 0) allFixtures[idx] = f;
-        // Canlı analizi yenile
-        if(f.status === 'LIVE') {
-          delete analysisCache[f.fixture_id];
-        }
+        if(['1H','2H','HT','ET'].indexOf(f.status)>=0) delete analysisCache[f.fixture_id];
       });
-      renderFixtures();
-      updateStats();
+      renderFixtures(); updateStats();
     }).catch(function(){});
 }, 60000);
 
-// ─── BUGÜNÜN TARİHİ UTC+3 ────────────────────────────────────────────────────
-function getTodayLocal() {
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function getTodayLocal(){
   var now = new Date();
-  var local = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+  var local = new Date(now.getTime() + 3*60*60*1000);
   return local.toISOString().split('T')[0];
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-fetch('/api/dates')
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var dates = data.dates || [];
-    var today = getTodayLocal();
-    currentDate = dates.indexOf(today) >= 0 ? today : (dates[0] || today);
-    window._dates = {};
-    dates.forEach(function(d) { window._dates[d] = true; });
-    buildDateTabs(dates);
-    loadDate(currentDate);
-  })
-  .catch(function() {
-    currentDate = getTodayLocal();
-    loadDate(currentDate);
-  });
+// ─── INIT ────────────────────────────────────────────────────────────────────
+(function(){
+  currentDate = getTodayLocal();
+  window._allDates = [currentDate];
+  buildDateTabs([currentDate]);
+  loadDate(currentDate);
+})();
 </script>
 </body>
 </html>
