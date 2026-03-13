@@ -161,3 +161,9 @@ def debug():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+
+@app.route("/api/debug-team/<team_id>")
+def debug_team(team_id):
+    from api.football_api import _get
+    data = _get("/sport/football/team/schedule", {"teamId": team_id, "type": "last"})
+    return jsonify({"raw": data, "team_id": team_id})
