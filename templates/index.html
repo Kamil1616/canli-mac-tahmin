@@ -296,8 +296,9 @@ function buildDetailHtml(data) {
   }
 
   var html = '';
-  var pregame = data.pregame || {};
-  var liveData = data.live || {};
+  var pred = data.prediction || {};
+  var pregame = pred.pregame || data.pregame || {};
+  var liveData = pred.live || data.live || {};
   var signals = data.signals || [];
   var liveStats = data.live_stats;
   var odds = data.odds;
