@@ -314,12 +314,12 @@ def debug_odds():
     import requests as req
     key = os.getenv("ODDS_API_KEY", "31eaabbde3de37bfa66ce9dfbee2b13fc945f1acb7e4f6b02ccb092c8cd2ba5d")
     # Önce mevcut eventleri çek
-    r = req.get(
-        "https://api.odds-api.io/v3/events",
-        params={"apiKey": key, "sport": "football", "limit": 5},
-        timeout=10
-    )
-    return jsonify({
-        "status": r.status_code,
-        "data": r.json()
-    })
+    results = {}
+    for status in ["prematch", "live"]:
+        r = req.get(
+            "https://api.odds-api.io/v3/events",
+            params={"apiKey": key, "sport": "football", "status": status, "limit": 5},
+            timeout=10
+        )
+        results[status] = {"http": r.status_code, "data": r.json()}
+    return jsonify(results)
