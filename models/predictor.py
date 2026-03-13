@@ -314,6 +314,8 @@ def analyze_match(fixture, home_stats, away_stats, live_stats=None):
     if status == "LIVE" and minute == "HT" and home_ht is not None and away_ht is not None:
         ht_analysis = halftime_analysis(home_stats, away_stats, home_ht, away_ht, live_stats)
 
+    iy_over = compute_over_probs(liy)
+
     return {
         "lambda_home": lh,
         "lambda_away": la,
@@ -322,6 +324,7 @@ def analyze_match(fixture, home_stats, away_stats, live_stats=None):
         "pregame": {
             "probs": {k: round(v * 100, 1) for k, v in pregame_probs.items()},
             "over": pregame_over,
+            "iy_over": iy_over,
         },
         "live": live_pred,
         "signals": signals,
