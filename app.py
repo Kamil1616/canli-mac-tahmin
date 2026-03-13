@@ -248,3 +248,24 @@ def debug_form(league_slug, team_name):
         "espn_id": espn_id,
         "all_teams": team_list
     })
+
+@app.route("/api/debug-schedule/<league_slug>/<team_id>")
+def debug_schedule(league_slug, team_id):
+    from api.football_api import ESPN_BASE
+    import requests
+    r = requests.get(f"{ESPN_BASE}/{league_slug}/teams/{team_id}/schedule", timeout=10)
+    if r.status_code != 200:
+        return jsonify({"error": f"HTTP {r.status_code}"})
+    events = r.json().get("events", [])
+    finished = []
+    for e in events:
+        comps = e.get("competitions", [])
+        if not comps: continue
+        status = comps[0].get("status",{}).get("type",{}).get("name","")
+        finished.append({
+            "id": e.get("id"),
+            "date": e.get("date","")[:10],
+            "name": e.get("name",""),
+            "status": status
+        })
+    return jsonify({"total": len(events), "events": finished})
