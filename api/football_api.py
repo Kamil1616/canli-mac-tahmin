@@ -357,8 +357,12 @@ def _calc_form(events, team_id, fixture_id=None):
         is_home = str(hc.get("id")) == str(team_id)
 
         try:
-            ft_h = int(hc.get("score", 0))
-            ft_a = int(ac.get("score", 0))
+            def parse_score(s):
+                if isinstance(s, dict):
+                    return int(s.get("value", s.get("displayValue", 0)))
+                return int(s or 0)
+            ft_h = parse_score(hc.get("score"))
+            ft_a = parse_score(ac.get("score"))
         except:
             continue
 
