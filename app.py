@@ -261,3 +261,41 @@ def debug_schedule(league_slug, team_id):
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+
+
+@app.route("/api/debug-calc/<league_slug>/<team_id>")
+def debug_calc(league_slug, team_id):
+    """Form hesaplama adımlarını göster"""
+    from api.football_api import ESPN_BASE, _calc_form
+    import requests as req
+    r = req.get(f"{ESPN_BASE}/{league_slug}/teams/{team_id}/schedule", timeout=10)
+    if r.status_code != 200:
+        return jsonify({"error": f"HTTP {r.status_code}"})
+    events = r.json().get("events", [])
+
+    debug_events = []
+    for e in events[-5:]:
+        comps = e.get("competitions", [])
+        if not comps:
+            continue
+        comp = comps[0]
+        status = comp.get("status", {}).get("type", {}).get("name", "")
+        competitors = comp.get("competitors", [])
+        comp_data = []
+        for c in competitors:
+            comp_data.append({
+                "id": c.get("id"),
+                "homeAway": c.get("homeAway"),
+                "score": c.get("score"),
+                "linescores": c.get("linescores", [])
+            })
+        debug_events.append({
+            "name": e.get("name"),
+            "date": e.get("date","")[:10],
+            "status": status,
+            "competitors": comp_data
+        })
+
+    # Form hesapla ve sonucu göster
+    form = _calc_form(events, team_id)
+    return jsonify({"form": form, "last_5_raw": debug_events})
