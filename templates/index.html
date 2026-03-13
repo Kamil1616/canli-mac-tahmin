@@ -263,12 +263,10 @@ function buildCard(f) {
   var badgesHtml = '<div class="signal-badges" id="badges_' + f.fixture_id + '">';
   if(analysis) {
     signals.forEach(function(s) {
-      badgesHtml += '<span class="signal-badge">' + s.icon + ' ' + s.label + '</span>';
+      var pct = s.prob ? Math.round(s.prob * 100) + '%' : '';
+      var isValue = s.value ? ' style="background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.4)"' : '';
+      badgesHtml += '<span class="signal-badge"' + isValue + '>' + s.label + ' ' + pct + '</span>';
     });
-    if(analysis.pregame) {
-      var probs = analysis.pregame.probs;
-      badgesHtml += '<span class="signal-badge" style="background:rgba(59,130,246,0.12);color:#93c5fd;border-color:rgba(59,130,246,0.3)">1: %'+probs['1']+' X: %'+probs['X']+' 2: %'+probs['2']+'</span>';
-    }
   }
   badgesHtml += '</div>';
 
