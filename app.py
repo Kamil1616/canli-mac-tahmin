@@ -253,3 +253,36 @@ def debug_tsdb_leagues():
         except Exception as e:
             results[team] = {"error": str(e)}
     return jsonify(results)
+
+@app.route("/api/debug-espn/<team_name>")
+def debug_espn(team_name):
+    """ESPN API takım arama + son maçlar testi"""
+    import requests
+    results = {}
+
+    # Test 1: Takım listesi (Premier League)
+    try:
+        r = requests.get(
+            "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/teams",
+            timeout=10
+        )
+        results["teams_status"] = r.status_code
+        if r.status_code == 200:
+            teams = r.json().get("sports", [{}])[0].get("leagues", [{}])[0].get("teams", [])
+            found = [t["team"] for t in teams if team_name.lower() in t["team"].get("displayName","").lower()]
+            results["found_teams"] = [{"id": t.get("id"), "name": t.get("displayName")} for t in found[:3]]
+            if found:
+                tid = found[0].get("id")
+                # Son maçlar
+                r2 = requests.get(
+                    f"https://site.api.espn.com/apis/v2/sports/soccer/eng.1/teams/{tid}/schedule",
+                    timeout=10
+                )
+                results["schedule_status"] = r2.status_code
+                if r2.status_code == 200:
+                    events = r2.json().get("events", [])
+                    results["last_events"] = len(events)
+    except Exception as e:
+        results["error"] = str(e)
+
+    return jsonify(results)
