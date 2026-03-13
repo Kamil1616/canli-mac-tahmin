@@ -29,3 +29,7 @@ def clear():
     if os.path.exists(CACHE_DIR):
         shutil.rmtree(CACHE_DIR)
     os.makedirs(CACHE_DIR, exist_ok=True)
+
+def clear_all():
+    clear()
+
