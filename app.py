@@ -286,3 +286,23 @@ def debug_espn(team_name):
         results["error"] = str(e)
 
     return jsonify(results)
+
+@app.route("/api/debug-espn2")
+def debug_espn2():
+    """ESPN API farklı endpoint'leri test et"""
+    import requests
+    results = {}
+    tests = [
+        ("teams_eng1", "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/teams"),
+        ("teams_eng", "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams"),
+        ("scoreboard", "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard"),
+        ("arsenal_schedule", "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/359/schedule"),
+        ("summary", "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/teams/359/events"),
+    ]
+    for name, url in tests:
+        try:
+            r = requests.get(url, timeout=8)
+            results[name] = r.status_code
+        except Exception as e:
+            results[name] = str(e)
+    return jsonify(results)
