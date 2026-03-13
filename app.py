@@ -164,13 +164,17 @@ def _extract_signals(pred, odds):
     if not pred:
         return signals
 
-    probs = pred.get("probabilities", {})
-    iy_ms = pred.get("iy_ms", {})
+    pregame = pred.get("pregame", {})
+    probs_raw = pregame.get("probs", {})
+    over_raw = pregame.get("over", {})
 
-    # MS sinyalleri
-    home_p = probs.get("home_win", 0)
-    draw_p = probs.get("draw", 0)
-    away_p = probs.get("away_win", 0)
+    def p(key): return probs_raw.get(key, 0) / 100
+
+    home_p = p("home_win")
+    draw_p = p("draw")
+    away_p = p("away_win")
+    over_p = over_raw.get("over_2_5", 0) / 100 if isinstance(over_raw.get("over_2_5"), (int, float)) else 0
+    under_p = 1 - over_p
 
     if home_p >= 0.55:
         signals.append({"type": "MS_HOME", "prob": round(home_p, 3), "label": "Ev Sahibi Kazanır"})
@@ -178,35 +182,29 @@ def _extract_signals(pred, odds):
         signals.append({"type": "MS_DRAW", "prob": round(draw_p, 3), "label": "Beraberlik"})
     if away_p >= 0.50:
         signals.append({"type": "MS_AWAY", "prob": round(away_p, 3), "label": "Deplasman Kazanır"})
-
-    # Gol sinyalleri
-    over_p = probs.get("over_2_5", 0)
-    under_p = probs.get("under_2_5", 0)
-    btts_p = probs.get("btts", 0)
-
     if over_p >= 0.60:
         signals.append({"type": "OVER_2_5", "prob": round(over_p, 3), "label": "2.5 Üst"})
     if under_p >= 0.60:
         signals.append({"type": "UNDER_2_5", "prob": round(under_p, 3), "label": "2.5 Alt"})
-    if btts_p >= 0.60:
-        signals.append({"type": "BTTS", "prob": round(btts_p, 3), "label": "KG Var"})
 
-    # Value bet (oran varsa)
     if odds:
         for outcome, prob, key in [
-            ("home", home_p, "home"),
-            ("draw", draw_p, "draw"),
-            ("away", away_p, "away"),
+            ("HOME", home_p, "home"),
+            ("DRAW", draw_p, "draw"),
+            ("AWAY", away_p, "away"),
         ]:
             odd_val = odds.get(key)
             if odd_val and prob > 0:
-                ev = round(prob * float(odd_val) - 1, 3)
-                if ev > 0.05:
-                    for s in signals:
-                        if s["type"] == f"MS_{outcome.upper()}":
-                            s["ev"] = ev
-                            s["odd"] = odd_val
-                            s["value"] = True
+                try:
+                    ev = round(prob * float(odd_val) - 1, 3)
+                    if ev > 0.05:
+                        for s in signals:
+                            if s["type"] == f"MS_{outcome}":
+                                s["ev"] = ev
+                                s["odd"] = odd_val
+                                s["value"] = True
+                except:
+                    pass
 
     return sorted(signals, key=lambda x: x["prob"], reverse=True)
 
