@@ -218,25 +218,11 @@ function renderFixtures() {
   var liveCount = list.filter(function(f) { return f.status === 'LIVE'; }).length;
   document.getElementById('liveBadge').style.display = liveCount > 0 ? '' : 'none';
 
-  var sections = {};
+  var html = '<div class="fixtures">';
   list.forEach(function(f) {
-    var key = f.country || f.league_name || 'Diğer';
-    if(!sections[key]) sections[key] = [];
-    sections[key].push(f);
+    html += buildCard(f);
   });
-
-  var html = '';
-  Object.keys(sections).forEach(function(country) {
-    var matches = sections[country];
-    // Sadece lig ismini göster
-    var ligName = matches[0].league_name || country;
-    html += '<div class="section-title">🌍 ' + esc(country) + ' · ' + esc(ligName) + '</div>';
-    html += '<div class="fixtures">';
-    matches.forEach(function(f) {
-      html += buildCard(f);
-    });
-    html += '</div>';
-  });
+  html += '</div>';
 
   document.getElementById('fixturesList').innerHTML = html;
 }
