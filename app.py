@@ -171,19 +171,27 @@ def _extract_signals(pred, odds):
     home_p  = probs.get("1", 0) / 100
     draw_p  = probs.get("X", 0) / 100
     away_p  = probs.get("2", 0) / 100
-    over_p  = over_raw.get("2.5", 0) / 100
-    under_p = 1 - over_p
+    over_p   = over_raw.get("2.5", 0) / 100
+    under_p  = 1 - over_p
+
+    iy_over_raw = pregame.get("iy_over", {})
+    iy_over_p   = iy_over_raw.get("0.5", 0) / 100
+    iy_under_p  = 1 - iy_over_p
 
     if home_p >= 0.55:
-        signals.append({"type": "MS_HOME",   "prob": round(home_p, 3),  "label": "Ev Sahibi Kazanır"})
+        signals.append({"type": "MS_HOME",      "prob": round(home_p, 3),    "label": "Ev Sahibi Kazanır"})
     if draw_p >= 0.35:
-        signals.append({"type": "MS_DRAW",   "prob": round(draw_p, 3),  "label": "Beraberlik"})
+        signals.append({"type": "MS_DRAW",      "prob": round(draw_p, 3),    "label": "Beraberlik"})
     if away_p >= 0.50:
-        signals.append({"type": "MS_AWAY",   "prob": round(away_p, 3),  "label": "Deplasman Kazanır"})
+        signals.append({"type": "MS_AWAY",      "prob": round(away_p, 3),    "label": "Deplasman Kazanır"})
     if over_p >= 0.60:
-        signals.append({"type": "OVER_2_5",  "prob": round(over_p, 3),  "label": "2.5 Üst"})
+        signals.append({"type": "OVER_2_5",     "prob": round(over_p, 3),    "label": "2.5 Üst"})
     if under_p >= 0.60:
-        signals.append({"type": "UNDER_2_5", "prob": round(under_p, 3), "label": "2.5 Alt"})
+        signals.append({"type": "UNDER_2_5",    "prob": round(under_p, 3),   "label": "2.5 Alt"})
+    if iy_over_p >= 0.68:
+        signals.append({"type": "IY_OVER_0_5",  "prob": round(iy_over_p, 3), "label": "İY 0.5 Üst"})
+    if iy_under_p >= 0.55:
+        signals.append({"type": "IY_UNDER_0_5", "prob": round(iy_under_p, 3),"label": "İY 0.5 Alt"})
 
     if odds:
         for sig_type, prob, odds_key in [
@@ -299,3 +307,19 @@ def debug_calc(league_slug, team_id):
     # Form hesapla ve sonucu göster
     form = _calc_form(events, team_id)
     return jsonify({"form": form, "last_5_raw": debug_events})
+
+
+@app.route("/api/debug-odds")
+def debug_odds():
+    import requests as req
+    key = os.getenv("ODDS_API_KEY", "31eaabbde3de37bfa66ce9dfbee2b13fc945f1acb7e4f6b02ccb092c8cd2ba5d")
+    # Önce mevcut eventleri çek
+    r = req.get(
+        "https://api.odds-api.io/v3/events",
+        params={"apiKey": key, "sport": "football", "limit": 5},
+        timeout=10
+    )
+    return jsonify({
+        "status": r.status_code,
+        "data": r.json()
+    })
