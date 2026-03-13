@@ -156,11 +156,23 @@ def get_live_stats(match_id):
         result["away"][key] = item.get("awayValue", item.get("away", 0))
     return result
 
-# ─── TAKIM FORM VERİSİ (iSportsAPI schedule tarama) ──────────────────────────
+# ─── TAKIM FORM VERİSİ ────────────────────────────────────────────────────────
+# Global cache: date -> raw maç listesi
+_schedule_cache = {}
+
+def _get_schedule_cached(date):
+    """Günlük schedule'ı bellek cache'inde tut (tekrar istek atmaz)"""
+    if date in _schedule_cache:
+        return _schedule_cache[date]
+    data = _get("/sport/football/schedule", {"date": date})
+    matches = _items(data)
+    _schedule_cache[date] = matches
+    return matches
+
 def get_team_form(team_id=None, fixture_id=None, team_name=None):
     """
-    Son 14 günün schedule'ını tarayarak takımın geçmiş maçlarını bul.
-    Günlük 14 istek harcıyor ama cache ile idare eder.
+    Son 21 günün schedule cache'inden takımın geçmiş maçlarını bul.
+    Schedule zaten fixture yüklenirken cache'leniyor — ekstra istek minimum.
     """
     if not team_id:
         print("get_team_form: team_id yok")
@@ -175,38 +187,55 @@ def get_team_form(team_id=None, fixture_id=None, team_name=None):
     team_matches = []
     seen = set()
 
-    # Son 14 günü tara (bugün dahil)
-    for delta in range(0, 15):
-        d = (today - timedelta(days=delta)).strftime("%Y-%m-%d")
-        data = _get("/sport/football/schedule", {"date": d})
-        for m in _items(data):
+    # Önce bellekte olan günleri tara (sıfır istek)
+    for date_str in list(_schedule_cache.keys()):
+        for m in _schedule_cache[date_str]:
             mid = m.get("matchId")
             if mid in seen:
                 continue
-            seen.add(mid)
-            # Sadece bu takımın maçları
             if str(m.get("homeId")) != str(team_id) and str(m.get("awayId")) != str(team_id):
                 continue
-            # Sadece bitmiş maçlar
             if m.get("status") != -1:
                 continue
-            # Kupa filtresi
             league = (m.get("leagueName") or "").lower()
             if any(kw in league for kw in CUP_KW):
                 continue
-            # Analize dahil edilecek maçı atla
-            if fixture_id and str(m.get("matchId")) == str(fixture_id):
+            if fixture_id and str(mid) == str(fixture_id):
                 continue
+            seen.add(mid)
             team_matches.append(m)
-        time.sleep(0.2)
-        if len(team_matches) >= 8:
-            break
+
+    # Yeterli veri yoksa eksik günleri çek (max 3 istek)
+    if len(team_matches) < 5:
+        for delta in range(2, 22):
+            d = (today - timedelta(days=delta)).strftime("%Y-%m-%d")
+            if d in _schedule_cache:
+                continue  # zaten taradık
+            matches = _get_schedule_cached(d)
+            time.sleep(0.2)
+            for m in matches:
+                mid = m.get("matchId")
+                if mid in seen:
+                    continue
+                if str(m.get("homeId")) != str(team_id) and str(m.get("awayId")) != str(team_id):
+                    continue
+                if m.get("status") != -1:
+                    continue
+                league = (m.get("leagueName") or "").lower()
+                if any(kw in league for kw in CUP_KW):
+                    continue
+                if fixture_id and str(mid) == str(fixture_id):
+                    continue
+                seen.add(mid)
+                team_matches.append(m)
+            if len(team_matches) >= 5:
+                break
 
     if len(team_matches) < 3:
         print(f"Form: '{team_name or team_id}' yetersiz maç ({len(team_matches)})")
         return None
 
-    # Son 8 maç, eskiden yeniye sırala
+    # Son 8 maç, eskiden yeniye
     team_matches = sorted(team_matches, key=lambda x: x.get("matchTime", 0))[-8:]
     n = len(team_matches)
     weights = [DECAY ** (n - 1 - i) for i in range(n)]
@@ -272,8 +301,7 @@ def get_team_form(team_id=None, fixture_id=None, team_name=None):
     def cap_att(v): return max(0.3, min(2.5, v))
     def cap_def(v): return max(0.4, min(2.5, v))
 
-    print(f"✓ Form: '{team_name or team_id}' {len(team_matches)} maç "
-          f"h_att={round(cap_att(avg_sh/LIG_ORT),3)} a_att={round(cap_att(avg_sa/LIG_ORT),3)}")
+    print(f"✓ Form: '{team_name or team_id}' {len(team_matches)} maç")
 
     return {
         "home_attack":  round(cap_att(avg_sh / LIG_ORT), 4),
