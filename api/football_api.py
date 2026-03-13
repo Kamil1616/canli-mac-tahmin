@@ -329,39 +329,164 @@ def _sofa_calc_form(events, team_id):
         "source": "sofascore",
     }
 
+# ─── THESPORTSDB ──────────────────────────────────────────────────────────────
+TSDB_URL = "https://www.thesportsdb.com/api/v1/json/3"
+_tsdb_team_cache = {}
+
+def _tsdb_get_team_id(team_name):
+    if team_name in _tsdb_team_cache:
+        return _tsdb_team_cache[team_name]
+    try:
+        r = requests.get(f"{TSDB_URL}/searchteams.php",
+                         params={"t": team_name}, timeout=10)
+        if r.status_code != 200:
+            return None
+        teams = r.json().get("teams") or []
+        for t in teams:
+            if t.get("strSport", "").lower() in ["soccer", "football"]:
+                tid = t.get("idTeam")
+                _tsdb_team_cache[team_name] = tid
+                return tid
+        return None
+    except Exception as e:
+        print(f"TheSportsDB search error ({team_name}): {e}")
+        return None
+
+def _tsdb_get_events(team_id):
+    try:
+        r = requests.get(f"{TSDB_URL}/eventslast.php",
+                         params={"id": team_id}, timeout=10)
+        if r.status_code != 200:
+            return []
+        return r.json().get("results") or []
+    except Exception as e:
+        print(f"TheSportsDB events error ({team_id}): {e}")
+        return []
+
+def _tsdb_calc_form(events, team_name):
+    DECAY = 0.75
+    LIG_ORT = 1.25
+    CUP_KW = ["cup", "kupa", "copa", "coupe", "pokal", "friendly",
+              "champions", "europa", "supercup"]
+
+    finished = []
+    for e in events:
+        if e.get("strStatus", "").lower() not in ["match finished", "ft"]:
+            continue
+        league = (e.get("strLeague") or "").lower()
+        if any(kw in league for kw in CUP_KW):
+            continue
+        finished.append(e)
+
+    finished = sorted(finished, key=lambda x: x.get("dateEvent", ""))[-8:]
+    if len(finished) < 3:
+        return None
+
+    n = len(finished)
+    weights = [DECAY ** (n - 1 - i) for i in range(n)]
+    w_total = sum(weights)
+
+    home_sc = home_co = home_w = 0.0
+    away_sc = away_co = away_w = 0.0
+    sc_w = co_w = ht_w = btts_w = 0.0
+    recent_matches = []
+
+    for idx, m in enumerate(finished):
+        w = weights[idx]
+        home_team = m.get("strHomeTeam", "")
+        away_team = m.get("strAwayTeam", "")
+        is_home = team_name.lower() in home_team.lower()
+
+        try:
+            ft_h = int(m.get("intHomeScore") or 0)
+            ft_a = int(m.get("intAwayScore") or 0)
+        except:
+            continue
+
+        ht_str = m.get("strHalfTime") or "0:0"
+        try:
+            ht_parts = ht_str.split(":")
+            ht_h = int(ht_parts[0])
+            ht_a = int(ht_parts[1])
+        except:
+            ht_h = ht_a = 0
+
+        gf = ft_h if is_home else ft_a
+        ga = ft_a if is_home else ft_h
+        ht_gf = ht_h if is_home else ht_a
+
+        sc_w   += gf * w
+        co_w   += ga * w
+        ht_w   += ht_gf * w
+        btts_w += (1 if gf > 0 and ga > 0 else 0) * w
+
+        if is_home:
+            home_sc += gf * w; home_co += ga * w; home_w += w
+        else:
+            away_sc += gf * w; away_co += ga * w; away_w += w
+
+        recent_matches.append({
+            "date":       m.get("dateEvent", ""),
+            "home_team":  home_team,
+            "away_team":  away_team,
+            "score":      f"{ft_h} - {ft_a}",
+            "ht_score":   ht_str,
+            "tournament": m.get("strLeague", ""),
+        })
+
+    if sc_w == 0:
+        return None
+
+    avg_st = sc_w / w_total
+    avg_ct = co_w / w_total
+    avg_sh = (home_sc / home_w) if home_w > 0 else avg_st * 1.1
+    avg_sa = (away_sc / away_w) if away_w > 0 else avg_st * 0.9
+    avg_ch = (home_co / home_w) if home_w > 0 else avg_ct * 0.9
+    avg_ca = (away_co / away_w) if away_w > 0 else avg_ct * 1.1
+    ht_ratio = max(0.18, min(0.45, (ht_w / w_total) / avg_st)) if avg_st > 0 else 0.28
+    btts = btts_w / w_total
+
+    def cap_att(v): return max(0.3, min(2.5, v))
+    def cap_def(v): return max(0.4, min(2.5, v))
+
+    return {
+        "home_attack":  round(cap_att(avg_sh / LIG_ORT), 4),
+        "home_defence": round(cap_def(avg_ch / LIG_ORT), 4),
+        "away_attack":  round(cap_att(avg_sa / LIG_ORT), 4),
+        "away_defence": round(cap_def(avg_ca / LIG_ORT), 4),
+        "general": {
+            "avg_scored":    round(avg_st, 3),
+            "btts_rate":     round(btts, 3),
+            "ht_goal_ratio": round(ht_ratio, 3),
+        },
+        "recent_matches": recent_matches,
+        "source": "thesportsdb",
+    }
+
 # ─── TAKIM FORM VERİSİ (ANA FONKSİYON) ──────────────────────────────────────
 def get_team_form(team_id=None, fixture_id=None, team_name=None):
-    """
-    Sofascore'dan form verisi çek.
-    team_name: takım adı → Sofascore arama yapılır
-    """
+    """TheSportsDB → form verisi çek"""
     if not team_name:
         print(f"get_team_form: team_name yok")
         return None
 
     try:
-        sofa_id = _sofa_get_team_id(team_name)
-        if not sofa_id:
-            print(f"Sofascore: '{team_name}' bulunamadı")
+        tsdb_id = _tsdb_get_team_id(team_name)
+        if not tsdb_id:
+            print(f"TheSportsDB: '{team_name}' bulunamadı")
             return None
 
-        time.sleep(0.3)
-
-        events = _sofa_get_events(sofa_id, 0)
-        if len(events) < 4:
-            time.sleep(0.2)
-            events2 = _sofa_get_events(sofa_id, 1)
-            events = events2 + events
+        time.sleep(0.2)
+        events = _tsdb_get_events(tsdb_id)
 
         if len(events) < 3:
-            print(f"Sofascore: '{team_name}' yetersiz maç ({len(events)})")
+            print(f"TheSportsDB: '{team_name}' yetersiz maç ({len(events)})")
             return None
 
-        result = _sofa_calc_form(events, sofa_id)
+        result = _tsdb_calc_form(events, team_name)
         if result:
-            print(f"✓ Sofascore form: {team_name} "
-                  f"h_att={result['home_attack']} h_def={result['home_defence']} "
-                  f"a_att={result['away_attack']} a_def={result['away_defence']}")
+            print(f"✓ TheSportsDB form: {team_name} "
+                  f"h_att={result['home_attack']} a_att={result['away_attack']}")
         return result
 
     except Exception as e:
