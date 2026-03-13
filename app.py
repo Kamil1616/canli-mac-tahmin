@@ -84,7 +84,7 @@ def api_fixtures():
         print(f"Fixtures error: {e}")
         return jsonify({"error": str(e), "fixtures": []}), 500
 
-@app.route("/api/analyze/<int:fixture_id>")
+@app.route("/api/analyze/<fixture_id>")
 def api_analyze(fixture_id):
     today_utc3 = (datetime.utcnow() + timedelta(hours=3)).strftime("%Y-%m-%d")
     date = request.args.get("date", today_utc3)
