@@ -314,12 +314,32 @@ def debug_odds():
     import requests as req
     key = os.getenv("ODDS_API_KEY", "31eaabbde3de37bfa66ce9dfbee2b13fc945f1acb7e4f6b02ccb092c8cd2ba5d")
     # Önce mevcut eventleri çek
-    results = {}
-    for status in ["prematch", "live"]:
-        r = req.get(
-            "https://api.odds-api.io/v3/events",
-            params={"apiKey": key, "sport": "football", "status": status, "limit": 5},
-            timeout=10
-        )
-        results[status] = {"http": r.status_code, "data": r.json()}
-    return jsonify(results)
+    # Önce canlı bir event al
+    r = req.get(
+        "https://api.odds-api.io/v3/events",
+        params={"apiKey": key, "sport": "football", "status": "live", "limit": 3},
+        timeout=10
+    )
+    events = r.json().get("data", r.json()) if isinstance(r.json(), dict) else r.json()
+    if not events:
+        return jsonify({"error": "Canlı maç yok", "raw": r.json()})
+
+    # İlk maçın oranlarını çek
+    event = events[0]
+    event_id = event.get("id")
+    r2 = req.get(
+        "https://api.odds-api.io/v3/odds",
+        params={"apiKey": key, "eventId": event_id},
+        timeout=10
+    )
+    # Prematch için bugünkü maçları dene
+    r3 = req.get(
+        "https://api.odds-api.io/v3/events",
+        params={"apiKey": key, "sport": "football", "status": "prematch", "limit": 3, "date": "2026-03-13"},
+        timeout=10
+    )
+    return jsonify({
+        "sample_event": event,
+        "odds_response": {"http": r2.status_code, "data": r2.json()},
+        "prematch_with_date": {"http": r3.status_code, "data": r3.json()},
+    })
