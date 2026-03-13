@@ -6,7 +6,7 @@ from api.football_api import (
     get_fixtures, get_live_matches, get_live_stats,
     get_team_form, get_live_odds
 )
-from models.predictor import predict_match
+from models.predictor import analyze_match
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "canli-mac-secret")
@@ -138,7 +138,7 @@ def api_analyze(fixture_id):
                 "error": "Yetersiz form verisi"
             }
         else:
-            prediction = predict_match(home_stats, away_stats, fix)
+            prediction = analyze_match(fix, home_stats, away_stats, live_stats)
             signals = _extract_signals(prediction, odds)
             result = {
                 "fixture": fix,
