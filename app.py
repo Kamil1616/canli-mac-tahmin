@@ -167,3 +167,19 @@ def debug_team(team_id):
     from api.football_api import _get
     data = _get("/sport/football/team/schedule", {"teamId": team_id, "type": "last"})
     return jsonify({"raw": data, "team_id": team_id})
+
+@app.route("/api/debug-sofa/<team_name>")
+def debug_sofa(team_name):
+    """Sofascore takım arama + form testi"""
+    from api.football_api import _sofa_get_team_id, _sofa_get_events, _sofa_calc_form
+    sofa_id = _sofa_get_team_id(team_name)
+    if not sofa_id:
+        return jsonify({"error": "Takım bulunamadı", "team_name": team_name})
+    events = _sofa_get_events(sofa_id, 0)
+    form = _sofa_calc_form(events, sofa_id)
+    return jsonify({
+        "team_name": team_name,
+        "sofa_id": sofa_id,
+        "events_count": len(events),
+        "form": form
+    })
