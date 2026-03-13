@@ -6,6 +6,17 @@ from datetime import datetime, timedelta
 BASE_URL = "http://api.isportsapi.com"
 API_KEY = os.getenv("ISPORTS_API_KEY", "")
 
+# ─── SOFASCORE ────────────────────────────────────────────────────────────────
+SOFA_URL = "https://api.sofascore.com/api/v1"
+SOFA_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Android 11; Mobile; rv:109.0) Gecko/109.0 Firefox/109.0",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
+    "Referer": "https://www.sofascore.com/",
+    "Origin": "https://www.sofascore.com",
+    "Cache-Control": "no-cache",
+}
+
 # status: 0=NS 1=1H 2=HT 3=2H 4=ET 5=PEN -1=FT -10=CANC -14=PST
 
 def _get(path, params=None):
@@ -49,7 +60,6 @@ def calc_minute(m):
     if not half_start:
         return None
     try:
-        # Unix timestamp
         start_utc = datetime.utcfromtimestamp(int(half_start))
         elapsed = int((datetime.utcnow() - start_utc).total_seconds() / 60)
         if status == 1:
@@ -64,7 +74,6 @@ def parse_match(m):
     status = parse_status(code)
     elapsed = calc_minute(m)
 
-    # matchTime Unix timestamp → UTC+3
     raw_time = m.get("matchTime", 0)
     try:
         ts = int(raw_time)
@@ -158,28 +167,85 @@ def get_live_stats(match_id):
         result["away"][key] = item.get("awayValue", item.get("away", 0))
     return result
 
-# ─── TAKIM FORM VERİSİ ────────────────────────────────────────────────────────
-def get_team_form(team_id, fixture_id=None):
-    CUP_KW = ["cup","kupa","copa","coupe","pokal","supercup","friendly","super cup"]
-    data = _get("/sport/football/team/schedule", {"teamId": team_id, "type": "last"})
-    items = _items(data)
+# ─── SOFASCORE: TAKIM ID BULMA ────────────────────────────────────────────────
+_sofa_team_cache = {}
 
-    finished = []
-    for m in items:
-        if m.get("status", 0) != -1:
-            continue
-        if any(kw in (m.get("leagueName") or "").lower() for kw in CUP_KW):
-            continue
-        if fixture_id and m.get("matchId") == fixture_id:
-            continue
-        finished.append(m)
-
-    finished = sorted(finished, key=lambda x: x.get("matchTime", 0))[-8:]
-    if len(finished) < 3:
+def _sofa_get_team_id(team_name):
+    """Takım adından Sofascore team ID bul (cache'li)"""
+    if team_name in _sofa_team_cache:
+        return _sofa_team_cache[team_name]
+    try:
+        r = requests.get(
+            f"{SOFA_URL}/search/all",
+            params={"q": team_name},
+            headers=SOFA_HEADERS,
+            timeout=10
+        )
+        if r.status_code != 200:
+            print(f"Sofascore search HTTP {r.status_code}: {team_name}")
+            return None
+        results = r.json().get("results", [])
+        name_lower = team_name.lower()
+        # Önce tam eşleşme
+        for item in results:
+            if item.get("type") == "team":
+                entity = item.get("entity", {})
+                if entity.get("sport", {}).get("slug") == "football":
+                    ename = entity.get("name", "").lower()
+                    if ename == name_lower or name_lower in ename or ename in name_lower:
+                        tid = entity.get("id")
+                        _sofa_team_cache[team_name] = tid
+                        return tid
+        # İlk football takımı
+        for item in results:
+            if item.get("type") == "team":
+                entity = item.get("entity", {})
+                if entity.get("sport", {}).get("slug") == "football":
+                    tid = entity.get("id")
+                    _sofa_team_cache[team_name] = tid
+                    return tid
         return None
+    except Exception as e:
+        print(f"Sofascore team search error ({team_name}): {e}")
+        return None
+
+def _sofa_get_events(team_id, page=0):
+    """Sofascore'dan takımın son maçlarını çek"""
+    try:
+        r = requests.get(
+            f"{SOFA_URL}/team/{team_id}/events/last/{page}",
+            headers=SOFA_HEADERS,
+            timeout=10
+        )
+        if r.status_code != 200:
+            return []
+        return r.json().get("events", [])
+    except Exception as e:
+        print(f"Sofascore events error ({team_id}): {e}")
+        return []
+
+def _sofa_calc_form(events, team_id):
+    """Sofascore maç verilerinden form hesapla (decay ağırlıklı)"""
+    CUP_KW = ["cup", "kupa", "copa", "coupe", "pokal", "supercup",
+              "friendly", "super cup", "champions", "europa"]
 
     DECAY = 0.75
     LIG_ORT = 1.25
+
+    finished = []
+    for e in events:
+        if e.get("status", {}).get("type") != "finished":
+            continue
+        tournament_name = e.get("tournament", {}).get("name", "").lower()
+        if any(kw in tournament_name for kw in CUP_KW):
+            continue
+        finished.append(e)
+
+    finished = sorted(finished, key=lambda x: x.get("startTimestamp", 0))[-8:]
+
+    if len(finished) < 3:
+        return None
+
     n = len(finished)
     weights = [DECAY ** (n - 1 - i) for i in range(n)]
     w_total = sum(weights)
@@ -187,27 +253,55 @@ def get_team_form(team_id, fixture_id=None):
     home_sc = home_co = home_w = 0.0
     away_sc = away_co = away_w = 0.0
     sc_w = co_w = ht_w = btts_w = 0.0
+    recent_matches = []
 
     for idx, m in enumerate(finished):
         w = weights[idx]
-        is_home = m.get("homeId") == team_id
-        ft_h = m.get("homeScore")
-        ft_a = m.get("awayScore")
-        ht_h = m.get("homeHalfScore") or 0
-        ht_a = m.get("awayHalfScore") or 0
+        home_team = m.get("homeTeam", {})
+        away_team = m.get("awayTeam", {})
+        is_home = home_team.get("id") == team_id
+        hs = m.get("homeScore", {})
+        as_ = m.get("awayScore", {})
+
+        ft_h = hs.get("current")
+        ft_a = as_.get("current")
+        ht_h = hs.get("period1") or 0
+        ht_a = as_.get("period1") or 0
+
         if ft_h is None or ft_a is None:
             continue
+
         gf = ft_h if is_home else ft_a
         ga = ft_a if is_home else ft_h
         ht_gf = ht_h if is_home else ht_a
+
         sc_w   += gf * w
         co_w   += ga * w
         ht_w   += ht_gf * w
         btts_w += (1 if gf > 0 and ga > 0 else 0) * w
+
         if is_home:
             home_sc += gf * w; home_co += ga * w; home_w += w
         else:
             away_sc += gf * w; away_co += ga * w; away_w += w
+
+        try:
+            match_date = datetime.utcfromtimestamp(
+                m.get("startTimestamp", 0)).strftime("%Y-%m-%d")
+        except:
+            match_date = "?"
+
+        recent_matches.append({
+            "date":       match_date,
+            "home_team":  home_team.get("name", ""),
+            "away_team":  away_team.get("name", ""),
+            "score":      f"{ft_h} - {ft_a}",
+            "ht_score":   f"{ht_h} - {ht_a}",
+            "tournament": m.get("tournament", {}).get("name", ""),
+        })
+
+    if sc_w == 0:
+        return None
 
     avg_st = sc_w / w_total
     avg_ct = co_w / w_total
@@ -230,5 +324,46 @@ def get_team_form(team_id, fixture_id=None):
             "avg_scored":    round(avg_st, 3),
             "btts_rate":     round(btts, 3),
             "ht_goal_ratio": round(ht_ratio, 3),
-        }
+        },
+        "recent_matches": recent_matches,
+        "source": "sofascore",
     }
+
+# ─── TAKIM FORM VERİSİ (ANA FONKSİYON) ──────────────────────────────────────
+def get_team_form(team_id=None, fixture_id=None, team_name=None):
+    """
+    Sofascore'dan form verisi çek.
+    team_name: takım adı → Sofascore arama yapılır
+    """
+    if not team_name:
+        print(f"get_team_form: team_name yok")
+        return None
+
+    try:
+        sofa_id = _sofa_get_team_id(team_name)
+        if not sofa_id:
+            print(f"Sofascore: '{team_name}' bulunamadı")
+            return None
+
+        time.sleep(0.3)
+
+        events = _sofa_get_events(sofa_id, 0)
+        if len(events) < 4:
+            time.sleep(0.2)
+            events2 = _sofa_get_events(sofa_id, 1)
+            events = events2 + events
+
+        if len(events) < 3:
+            print(f"Sofascore: '{team_name}' yetersiz maç ({len(events)})")
+            return None
+
+        result = _sofa_calc_form(events, sofa_id)
+        if result:
+            print(f"✓ Sofascore form: {team_name} "
+                  f"h_att={result['home_attack']} h_def={result['home_defence']} "
+                  f"a_att={result['away_attack']} a_def={result['away_defence']}")
+        return result
+
+    except Exception as e:
+        print(f"get_team_form error ({team_name}): {e}")
+        return None
