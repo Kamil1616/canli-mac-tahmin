@@ -11,7 +11,7 @@ from models.predictor import analyze_match
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "canli-mac-secret")
 
-# ─── CACHE HELPERS ────────────────────────────────────────────────────────────
+# \u2500\u2500\u2500 CACHE HELPERS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 def get_fixtures_cached(date):
     cached = cache_module.get(f"fix_{date}", ttl_minutes=5)
     if cached:
@@ -44,7 +44,7 @@ def get_odds_cached(home_team, away_team, fixture_id):
         cache_module.set(key, odds)
     return odds
 
-# ─── ROUTES ───────────────────────────────────────────────────────────────────
+# \u2500\u2500\u2500 ROUTES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -56,7 +56,7 @@ def api_fixtures():
     try:
         fixtures = get_fixtures_cached(date)
 
-        # Canlı maçları üstüne yaz
+        # Canl\u0131 ma\u00e7lar\u0131 \u00fcst\u00fcne yaz
         live = get_live_matches()
         live_ids = {m["fixture_id"] for m in live}
         for i, f in enumerate(fixtures):
@@ -70,16 +70,17 @@ def api_fixtures():
 
         def sort_key(x):
             s = x.get("status", "NS")
-            if s in ["1H","ET","PEN"]: return (0, x.get("time",""))
-            elif s == "HT":            return (1, x.get("time",""))
-            elif s == "2H":            return (2, x.get("time",""))
-            elif s == "NS":            return (3, x.get("time",""))
-            else:                      return (4, x.get("time",""))
+            if s in ["1H", "ET", "PEN"]: return (0, x.get("time", ""))
+            elif s == "HT":              return (1, x.get("time", ""))
+            elif s == "2H":              return (2, x.get("time", ""))
+            elif s == "NS":              return (3, x.get("time", ""))
+            else:                        return (4, x.get("time", ""))
         fixtures.sort(key=sort_key)
 
         return jsonify({"fixtures": fixtures, "date": date, "count": len(fixtures)})
     except Exception as e:
-        print(f"Fixtures error: {e}")
+        import traceback
+        print(f"Fixtures error: {traceback.format_exc()}")
         return jsonify({"error": str(e), "fixtures": []}), 500
 
 @app.route("/api/analyze/<fixture_id>")
@@ -101,7 +102,7 @@ def api_analyze(fixture_id):
             live = get_live_matches()
             fix = next((f for f in live if str(f["fixture_id"]) == str(fixture_id)), None)
         if not fix:
-            return jsonify({"error": "Maç bulunamadı", "date": date}), 404
+            return jsonify({"error": "Ma\u00e7 bulunamad\u0131", "date": date}), 404
 
         home_id   = fix.get("home_team_id")
         away_id   = fix.get("away_team_id")
@@ -111,18 +112,18 @@ def api_analyze(fixture_id):
         slug      = fix.get("league_slug", "")
 
         if not home_id or not away_id:
-            return jsonify({"error": "Takım ID bulunamadı"}), 422
+            return jsonify({"error": "Tak\u0131m ID bulunamad\u0131"}), 422
 
         # Form verileri
         home_stats = get_stats_cached(home_id, fixture_id, home_name, league, slug)
         away_stats = get_stats_cached(away_id, fixture_id, away_name, league, slug)
 
-        # Canlı istatistikler
+        # Canl\u0131 istatistikler
         live_stats = None
-        if fix.get("status") in ["1H","HT","2H","ET","PEN"]:
+        if fix.get("status") in ["1H", "HT", "2H", "ET", "PEN"]:
             live_stats = get_live_stats(fixture_id, slug)
 
-        # Canlı oranlar
+        # Canl\u0131 oranlar
         odds = get_odds_cached(home_name, away_name, fixture_id)
 
         # Tahmin
@@ -158,112 +159,29 @@ def api_analyze(fixture_id):
         print(f"Analyze error: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
+
 def _extract_signals(pred, odds):
-    """Tahmin sinyalleri"""
+    """
+    predictor.py'deki analyze_match \u00e7\u0131kt\u0131s\u0131ndan sinyal \u00fcret.
+    predictor probs: {"1": float, "X": float, "2": float} \u2014 y\u00fczde olarak (\u00f6rn. 45.2)
+    predictor over:  {"0.5": float, "1.5": float, "2.5": float, "3.5": float} \u2014 y\u00fczde
+    """
     signals = []
     if not pred:
         return signals
 
-    pregame = pred.get("pregame", {})
-    probs_raw = pregame.get("probs", {})
-    over_raw = pregame.get("over", {})
+    pregame  = pred.get("pregame", {})
+    probs    = pregame.get("probs", {})   # {"1": 45.2, "X": 28.1, "2": 26.7}
+    over_raw = pregame.get("over", {})    # {"0.5": 88.0, "1.5": 65.0, "2.5": 42.0, "3.5": 22.0}
 
-    def p(key): return probs_raw.get(key, 0) / 100
-
-    home_p = p("home_win")
-    draw_p = p("draw")
-    away_p = p("away_win")
-    over_p = over_raw.get("over_2_5", 0) / 100 if isinstance(over_raw.get("over_2_5"), (int, float)) else 0
+    # Y\u00fczdeden orana \u00e7evir
+    home_p  = probs.get("1", 0) / 100
+    draw_p  = probs.get("X", 0) / 100
+    away_p  = probs.get("2", 0) / 100
+    over_p  = over_raw.get("2.5", 0) / 100
     under_p = 1 - over_p
 
     if home_p >= 0.55:
-        signals.append({"type": "MS_HOME", "prob": round(home_p, 3), "label": "Ev Sahibi Kazanır"})
+        signals.append({"type": "MS_HOME",    "prob": round(home_p, 3),  "label": "Ev Sahibi Kazan\u0131r"})
     if draw_p >= 0.35:
-        signals.append({"type": "MS_DRAW", "prob": round(draw_p, 3), "label": "Beraberlik"})
-    if away_p >= 0.50:
-        signals.append({"type": "MS_AWAY", "prob": round(away_p, 3), "label": "Deplasman Kazanır"})
-    if over_p >= 0.60:
-        signals.append({"type": "OVER_2_5", "prob": round(over_p, 3), "label": "2.5 Üst"})
-    if under_p >= 0.60:
-        signals.append({"type": "UNDER_2_5", "prob": round(under_p, 3), "label": "2.5 Alt"})
-
-    if odds:
-        for outcome, prob, key in [
-            ("HOME", home_p, "home"),
-            ("DRAW", draw_p, "draw"),
-            ("AWAY", away_p, "away"),
-        ]:
-            odd_val = odds.get(key)
-            if odd_val and prob > 0:
-                try:
-                    ev = round(prob * float(odd_val) - 1, 3)
-                    if ev > 0.05:
-                        for s in signals:
-                            if s["type"] == f"MS_{outcome}":
-                                s["ev"] = ev
-                                s["odd"] = odd_val
-                                s["value"] = True
-                except:
-                    pass
-
-    return sorted(signals, key=lambda x: x["prob"], reverse=True)
-
-@app.route("/api/clear-cache")
-def clear_cache():
-    cache_module.clear_all()
-    return jsonify({"status": "ok", "message": "Cache temizlendi"})
-
-@app.route("/api/debug")
-def debug():
-    from api.football_api import get_fixtures
-    today = (datetime.utcnow() + timedelta(hours=3)).strftime("%Y-%m-%d")
-    fixtures = get_fixtures(today)
-    return jsonify({
-        "espn_fixtures": len(fixtures),
-        "sample": fixtures[:3] if fixtures else [],
-        "odds_key_set": bool(os.getenv("ODDS_API_KEY")),
-    })
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5001)
-
-@app.route("/api/debug-form/<league_slug>/<team_name>")
-def debug_form(league_slug, team_name):
-    from api.football_api import _find_espn_team_id, ESPN_BASE
-    import requests
-    # Takım listesi çek
-    r = requests.get(f"{ESPN_BASE}/{league_slug}/teams", timeout=10)
-    if r.status_code != 200:
-        return jsonify({"error": f"HTTP {r.status_code}"})
-    teams = (r.json().get("sports", [{}])[0]
-                     .get("leagues", [{}])[0]
-                     .get("teams", []))
-    team_list = [{"id": t["team"]["id"], "name": t["team"]["displayName"]} for t in teams]
-    espn_id = _find_espn_team_id(team_name, league_slug)
-    return jsonify({
-        "league_slug": league_slug,
-        "team_name": team_name,
-        "espn_id": espn_id,
-        "all_teams": team_list
-    })
-
-@app.route("/api/debug-schedule/<league_slug>/<team_id>")
-def debug_schedule(league_slug, team_id):
-    from api.football_api import ESPN_BASE
-    import requests
-    r = requests.get(f"{ESPN_BASE}/{league_slug}/teams/{team_id}/schedule", timeout=10)
-    if r.status_code != 200:
-        return jsonify({"error": f"HTTP {r.status_code}"})
-    events = r.json().get("events", [])
-    finished = []
-    for e in events:
-        comps = e.get("competitions", [])
-        if not comps: continue
-        status = comps[0].get("status",{}).get("type",{}).get("name","")
-        finished.append({
-            "id": e.get("id"),
-            "date": e.get("date","")[:10],
-            "name": e.get("name",""),
-            "status": status
-        })
-    return jsonify({"total": len(events), "events": finished})
+        signals.append({"type": "MS_
