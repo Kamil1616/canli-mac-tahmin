@@ -26,12 +26,12 @@ def get_fixtures_cached(date):
     cache_module.set(f"fix_{date}", fixtures)
     return fixtures
 
-def get_stats_cached(team_id, fixture_id=None):
+def get_stats_cached(team_id, fixture_id=None, team_name=None):
     key = f"form_{team_id}_{fixture_id}"
     cached = cache_module.get(key, ttl_minutes=120)
     if cached:
         return cached
-    stats = get_team_form(team_id, fixture_id)
+    stats = get_team_form(team_id=team_id, fixture_id=fixture_id, team_name=team_name)
     if stats:
         cache_module.set(key, stats)
     return stats
@@ -113,8 +113,8 @@ def api_analyze(fixture_id):
             return jsonify({"error": "Takım ID bulunamadı"}), 422
 
         # Form verileri
-        home_stats = get_stats_cached(home_id, fixture_id)
-        away_stats = get_stats_cached(away_id, fixture_id)
+        home_stats = get_stats_cached(home_id, fixture_id, team_name=fix.get("home_team_name"))
+        away_stats = get_stats_cached(away_id, fixture_id, team_name=fix.get("away_team_name"))
 
         # Canlı istatistikler
         live_stats = None
