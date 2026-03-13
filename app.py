@@ -183,3 +183,27 @@ def debug_sofa(team_name):
         "events_count": len(events),
         "form": form
     })
+
+@app.route("/api/debug-tsdb/<team_name>")
+def debug_tsdb(team_name):
+    """TheSportsDB takım arama testi"""
+    import requests
+    try:
+        r = requests.get(
+            "https://www.thesportsdb.com/api/v1/json/3/searchteams.php",
+            params={"t": team_name},
+            timeout=10
+        )
+        data = r.json()
+        teams = data.get("teams") or []
+        result = []
+        for t in teams[:3]:
+            result.append({
+                "id": t.get("idTeam"),
+                "name": t.get("strTeam"),
+                "sport": t.get("strSport"),
+                "league": t.get("strLeague"),
+            })
+        return jsonify({"status": r.status_code, "found": len(teams), "teams": result})
+    except Exception as e:
+        return jsonify({"error": str(e)})
