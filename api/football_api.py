@@ -142,7 +142,7 @@ def _parse_espn_event(e, slug):
         status_desc = status_type.get("description", "").lower()
         clock = status_obj.get("displayClock", "")
 
-        if "final" in status_name or "final" in status_desc:
+        if "final" in status_name or "final" in status_desc or "full_time" in status_name:
             status = "FT"
         elif "halftime" in status_desc or "half time" in status_desc:
             status = "HT"
@@ -328,7 +328,7 @@ def _calc_form(events, team_id, fixture_id=None):
             continue
         comp = comps[0]
         status = comp.get("status", {}).get("type", {}).get("name", "").lower()
-        if "final" not in status:
+        if "final" not in status and "full_time" not in status and "ft" not in status:
             continue
         if fixture_id and str(e.get("id")) == str(fixture_id):
             continue
