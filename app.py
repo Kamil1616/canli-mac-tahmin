@@ -228,3 +228,23 @@ def debug():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+
+@app.route("/api/debug-form/<league_slug>/<team_name>")
+def debug_form(league_slug, team_name):
+    from api.football_api import _find_espn_team_id, ESPN_BASE
+    import requests
+    # Takım listesi çek
+    r = requests.get(f"{ESPN_BASE}/{league_slug}/teams", timeout=10)
+    if r.status_code != 200:
+        return jsonify({"error": f"HTTP {r.status_code}"})
+    teams = (r.json().get("sports", [{}])[0]
+                     .get("leagues", [{}])[0]
+                     .get("teams", []))
+    team_list = [{"id": t["team"]["id"], "name": t["team"]["displayName"]} for t in teams]
+    espn_id = _find_espn_team_id(team_name, league_slug)
+    return jsonify({
+        "league_slug": league_slug,
+        "team_name": team_name,
+        "espn_id": espn_id,
+        "all_teams": team_list
+    })
