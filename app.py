@@ -207,3 +207,49 @@ def debug_tsdb(team_name):
         return jsonify({"status": r.status_code, "found": len(teams), "teams": result})
     except Exception as e:
         return jsonify({"error": str(e)})
+
+@app.route("/api/debug-tsdb-leagues")
+def debug_tsdb_leagues():
+    """TheSportsDB'nin bildiği ligleri test et"""
+    import requests
+    test_teams = [
+        "Galatasaray",       # Türkiye
+        "Arsenal",           # Premier League
+        "Real Madrid",       # La Liga
+        "Bayern Munich",     # Bundesliga
+        "Juventus",          # Serie A
+        "PSG",               # Ligue 1
+        "Ajax",              # Eredivisie
+        "Benfica",           # Portekiz
+        "Celtic",            # İskoçya
+        "Fenerbahce",        # Türkiye
+        "Flamengo",          # Brezilya
+        "Boca Juniors",      # Arjantin
+    ]
+    results = {}
+    for team in test_teams:
+        try:
+            r = requests.get(
+                "https://www.thesportsdb.com/api/v1/json/3/searchteams.php",
+                params={"t": team}, timeout=8
+            )
+            teams = (r.json().get("teams") or [])
+            soccer = [t for t in teams if t.get("strSport","").lower() in ["soccer","football"]]
+            if soccer:
+                t = soccer[0]
+                # Son maçları da test et
+                r2 = requests.get(
+                    "https://www.thesportsdb.com/api/v1/json/3/eventslast.php",
+                    params={"id": t["idTeam"]}, timeout=8
+                )
+                events = (r2.json().get("results") or [])
+                results[team] = {
+                    "found": True,
+                    "league": t.get("strLeague"),
+                    "last_events": len(events)
+                }
+            else:
+                results[team] = {"found": False}
+        except Exception as e:
+            results[team] = {"error": str(e)}
+    return jsonify(results)
